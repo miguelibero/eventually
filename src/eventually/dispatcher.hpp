@@ -8,18 +8,18 @@
 
 namespace eventually {
 
-	class petition;
+    class petition;
 
-	template<typename F>
-	class dispatcher
-	{
-	private:
-		std::vector<std::pair<petition,F>> _petitions;
-		std::recursive_mutex _petitions_mutex;		
-	public:
-		inline petition dispatch(const F& function);
-		inline void process();
-	};
+    template<typename F>
+    class dispatcher
+    {
+    private:
+        std::vector<std::pair<petition,F>> _petitions;
+        std::recursive_mutex _petitions_mutex;        
+    public:
+        inline petition dispatch(const F& function);
+        inline void process();
+    };
 
 }
 

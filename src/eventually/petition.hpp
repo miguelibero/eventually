@@ -7,34 +7,34 @@
 
 namespace eventually {
 
-	class petition_data;
+    class petition_data;
 
-	class petition
-	{
-	private:
-		std::shared_ptr<petition_data> _data;
-	public:
-		inline petition();
-		inline void cancel();
-		template<typename F>
-		inline void process(const F& function) const;
-		template<typename F>
-		inline void check(const F& function) const;
-	};
+    class petition
+    {
+    private:
+        std::shared_ptr<petition_data> _data;
+    public:
+        inline petition();
+        inline void cancel();
+        template<typename F>
+        inline void process(const F& function) const;
+        template<typename F>
+        inline void check(const F& function) const;
+    };
 
-	class petition_data
-	{
-	private:
-		bool _active;
-		mutable std::recursive_mutex _active_mutex;
-	public:
-		inline petition_data();
-		inline void cancel();
-		template<typename F>
-		inline void process(const F& function) const;
-		template<typename F>
-		inline void check(const F& function) const;
-	};
+    class petition_data
+    {
+    private:
+        bool _active;
+        mutable std::recursive_mutex _active_mutex;
+    public:
+        inline petition_data();
+        inline void cancel();
+        template<typename F>
+        inline void process(const F& function) const;
+        template<typename F>
+        inline void check(const F& function) const;
+    };
 
 }
 
