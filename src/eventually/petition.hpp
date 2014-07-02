@@ -14,28 +14,26 @@ namespace eventually {
 	private:
 		std::shared_ptr<petition_data> _data;
 	public:
-		petition();
-		void cancel();
+		inline petition();
+		inline void cancel();
 		template<typename F>
-		void step(const F& function) const;
+		inline void process(const F& function) const;
 		template<typename F>
-		void check(const F& function) const;
+		inline void check(const F& function) const;
 	};
 
 	class petition_data
 	{
 	private:
-		typedef std::recursive_mutex mutex_t;
-		typedef std::lock_guard<mutex_t> lock_guard_t;
 		bool _active;
-		mutable mutex_t _active_mutex;
+		mutable std::recursive_mutex _active_mutex;
 	public:
-		petition_data();
-		void cancel();
+		inline petition_data();
+		inline void cancel();
 		template<typename F>
-		void step(const F& function) const;
+		inline void process(const F& function) const;
 		template<typename F>
-		void check(const F& function) const;
+		inline void check(const F& function) const;
 	};
 
 }

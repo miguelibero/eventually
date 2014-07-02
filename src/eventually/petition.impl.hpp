@@ -18,9 +18,9 @@ namespace eventually {
 	}
 
 	template<typename F>
-	void petition::step(const F& function) const
+	void petition::process(const F& function) const
 	{
-		return _data->step(function);
+		return _data->process(function);
 	}
 
 	template<typename F>
@@ -36,14 +36,14 @@ namespace eventually {
 
 	void petition_data::cancel()
 	{
-		lock_guard_t lock(_active_mutex);
+		std::lock_guard<decltype(_active_mutex)> lock(_active_mutex);
 		_active = false;
 	}
 
 	template<typename F>
-	void petition_data::step(const F& function) const
+	void petition_data::process(const F& function) const
 	{
-		lock_guard_t lock(_active_mutex);
+		std::lock_guard<decltype(_active_mutex)> lock(_active_mutex);
 		if(_active)
 		{
 			function();
@@ -53,7 +53,7 @@ namespace eventually {
 	template<typename F>
 	void petition_data::check(const F& function) const
 	{
-		lock_guard_t lock(_active_mutex);
+		std::lock_guard<decltype(_active_mutex)> lock(_active_mutex);
 		function(_active);
 	}
 
