@@ -12,9 +12,9 @@ namespace eventually {
 
     }
 
-    void petition::cancel()
+    void petition::close()
     {
-        _data->cancel();
+        _data->close();
     }
 
     template<typename F>
@@ -34,7 +34,7 @@ namespace eventually {
     {
     }
 
-    void petition_data::cancel()
+    void petition_data::close()
     {
         std::lock_guard<decltype(_active_mutex)> lock(_active_mutex);
         _active = false;

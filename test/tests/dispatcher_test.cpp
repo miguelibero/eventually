@@ -1,6 +1,6 @@
 
 #include <eventually/dispatcher.hpp>
-
+#include <functional>
 #include "gtest/gtest.h"
 
 using namespace eventually;
@@ -20,7 +20,7 @@ TEST(dispatcher, process_single) {
     pet = d.dispatch([&test](){
         test = true;
     });
-    pet.cancel();
+    pet.close();
     d.process();
     ASSERT_FALSE(test);
 }

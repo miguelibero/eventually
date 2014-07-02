@@ -7,12 +7,6 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
 
 project(eventually)
 
-# set(EVENTUALLY_SOURCE_DIR "src/eventually")
-# file(GLOB_RECURSE EVENTUALLY_SOURCES
-#     "${EVENTUALLY_SOURCE_DIR}/*.cpp"
-# )
-# add_library(eventually ${EVENTUALLY_SOURCES})
-
 set(EVENTUALLY_TESTS_DIR "test/tests")
 file(GLOB_RECURSE EVENTUALLY_TESTS
     "${EVENTUALLY_TESTS_DIR}/*.cpp"

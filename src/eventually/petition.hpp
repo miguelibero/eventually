@@ -15,7 +15,7 @@ namespace eventually {
         std::shared_ptr<petition_data> _data;
     public:
         inline petition();
-        inline void cancel();
+        inline void close();
         template<typename F>
         inline void process(const F& function) const;
         template<typename F>
@@ -29,7 +29,7 @@ namespace eventually {
         mutable std::recursive_mutex _active_mutex;
     public:
         inline petition_data();
-        inline void cancel();
+        inline void close();
         template<typename F>
         inline void process(const F& function) const;
         template<typename F>
