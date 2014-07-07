@@ -15,14 +15,14 @@ namespace eventually {
     private:
         mutable std::mutex _data_mutex;
         mutable std::shared_ptr<std::shared_ptr<petition_data>> _data;
-        inline void make_equal_to(const petition& other);
+        void make_equal_to(const petition& other);
     public:
-        inline petition();
-        inline petition(const petition& other);
-        inline bool close();
-        inline bool active() const;
-        inline petition& operator=(const petition& other);
-        inline const petition operator>>(petition other) const;
+        petition();
+        petition(const petition& other);
+        bool close();
+        bool active() const;
+        petition& operator=(const petition& other);
+        const petition operator>>(petition other) const;
     };
 
     class petition_data
@@ -30,13 +30,11 @@ namespace eventually {
     private:
         std::atomic<bool> _active;
     public:
-        inline petition_data();
-        inline bool close();
-        inline bool active() const;
+        petition_data();
+        bool close();
+        bool active() const;
     };
 
 }
-
-#include <eventually/petition.impl.hpp>
 
 #endif

@@ -3,7 +3,6 @@
 #define _eventually_dispatcher_impl_hpp_
 
 #include <eventually/dispatcher.hpp>
-#include <cassert>
 
 namespace eventually {
 

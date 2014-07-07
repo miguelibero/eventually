@@ -1,7 +1,6 @@
 
 #include <eventually/dispatcher.hpp>
 #include <functional>
-#include <iostream>
 #include "gtest/gtest.h"
 
 using namespace eventually;

@@ -1,13 +1,10 @@
 
-#ifndef _eventually_petition_impl_hpp_
-#define _eventually_petition_impl_hpp_
-
 #include <eventually/petition.hpp>
 
 namespace eventually {
 
     petition::petition():
-    _data(new std::shared_ptr<petition_data>(std::make_shared<petition_data>()))
+    _data(std::make_shared<std::shared_ptr<petition_data>>(new petition_data()))
     {
     }
 
@@ -67,5 +64,3 @@ namespace eventually {
     }
 
 }
-
-#endif
