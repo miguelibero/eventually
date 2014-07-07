@@ -7,54 +7,63 @@
 namespace eventually {
 
     petition::petition():
-    _data(new petition_data())
+    _data(new std::shared_ptr<petition_data>(std::make_shared<petition_data>()))
     {
-
     }
 
-    void petition::close()
+    petition::petition(const petition& other):
+    _data(other._data)
     {
-        _data->close();
     }
 
-    template<typename F>
-    void petition::process(const F& function) const
+    bool petition::close()
     {
-        return _data->process(function);
+        std::lock_guard<decltype(_data_mutex)> lock(_data_mutex);
+        return (*_data)->close();
     }
 
-    template<typename F>
-    void petition::check(const F& function) const
+    bool petition::active() const
     {
-        return _data->check(function);
-    }    
+        std::lock_guard<decltype(_data_mutex)> lock(_data_mutex);
+        return (*_data)->active();
+    }
+
+    void petition::make_equal_to(const petition& other) const
+    {
+        std::lock_guard<decltype(_data_mutex)> lock(_data_mutex);
+        if(other._data != _data || *other._data != *_data)
+        {
+            std::lock_guard<decltype(other._data_mutex)> lock(other._data_mutex);
+            *_data = *other._data;
+            other._data = _data;
+        }
+    }
+
+    petition& petition::operator=(const petition& other)
+    {
+        make_equal_to(other);
+        return *this;
+    }
+
+    petition& petition::operator>>(const petition& other)
+    {
+        other.make_equal_to(*this);
+        return *this;
+    }
 
     petition_data::petition_data():
     _active(true)
     {
     }
 
-    void petition_data::close()
+    bool petition_data::close()
     {
-        std::lock_guard<decltype(_active_mutex)> lock(_active_mutex);
-        _active = false;
+        return _active.exchange(false);
     }
 
-    template<typename F>
-    void petition_data::process(const F& function) const
+    bool petition_data::active() const
     {
-        std::lock_guard<decltype(_active_mutex)> lock(_active_mutex);
-        if(_active)
-        {
-            function();
-        }
-    }
-
-    template<typename F>
-    void petition_data::check(const F& function) const
-    {
-        std::lock_guard<decltype(_active_mutex)> lock(_active_mutex);
-        function(_active);
+        return _active.load();
     }
 
 }

@@ -15,7 +15,7 @@ namespace eventually {
     {
     private:
         std::vector<std::pair<petition,F>> _petitions;
-        std::recursive_mutex _petitions_mutex;        
+        std::mutex _petitions_mutex;        
     public:
         inline petition dispatch(const F& function);
         inline void process();

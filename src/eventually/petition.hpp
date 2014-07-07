@@ -3,6 +3,7 @@
 #define _eventually_petition_hpp_
 
 #include <memory>
+#include <atomic>
 #include <mutex>
 
 namespace eventually {
@@ -12,28 +13,26 @@ namespace eventually {
     class petition
     {
     private:
-        std::shared_ptr<petition_data> _data;
+        mutable std::mutex _data_mutex;
+        mutable std::shared_ptr<std::shared_ptr<petition_data>> _data;
+        inline void make_equal_to(const petition& other) const;
     public:
         inline petition();
-        inline void close();
-        template<typename F>
-        inline void process(const F& function) const;
-        template<typename F>
-        inline void check(const F& function) const;
+        inline petition(const petition& other);
+        inline bool close();
+        inline bool active() const;
+        inline petition& operator=(const petition& other);
+        inline petition& operator>>(const petition& other);
     };
 
     class petition_data
     {
     private:
-        bool _active;
-        mutable std::recursive_mutex _active_mutex;
+        std::atomic<bool> _active;
     public:
         inline petition_data();
-        inline void close();
-        template<typename F>
-        inline void process(const F& function) const;
-        template<typename F>
-        inline void check(const F& function) const;
+        inline bool close();
+        inline bool active() const;
     };
 
 }

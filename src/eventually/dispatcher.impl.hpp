@@ -3,6 +3,7 @@
 #define _eventually_dispatcher_impl_hpp_
 
 #include <eventually/dispatcher.hpp>
+#include <cassert>
 
 namespace eventually {
 
@@ -25,7 +26,10 @@ namespace eventually {
         }
         for(auto& e : petitions)
         {
-            e.first.process(e.second);
+            if(e.first.active())
+            {
+                e.second();
+            }
         }
     }
 

@@ -6,57 +6,59 @@
 
 using namespace eventually;
 
-TEST(petition, process_single) {
+TEST(petition, active) {
 
     petition p;
 
-    bool test = false;
-    p.process([&test](){
-        test = true;
-    });
-    ASSERT_TRUE(test);
+    ASSERT_TRUE(p.active());
 
     p.close();
-    test = false;
-    p.process([&test](){
-        test = true;
-    });
 
-    ASSERT_FALSE(test);
+    ASSERT_FALSE(p.active());
 }
 
-TEST(petition, check_single) {
-
-    petition p;
-
-    bool test = false;
-    p.check([&test](bool active){
-        test = active;
-    });
-    ASSERT_TRUE(test);
-
-    p.close();
-    test = false;
-    p.check([&test](bool active){
-        test = active;
-    });
-
-    ASSERT_FALSE(test);
-}
-
-TEST(petition, copy) {
+TEST(petition, copyCtor) {
 
     petition p1;
     petition p2(p1);
 
     p1.close();
 
-    bool test = true;
-    p2.check([&test](bool active){
-        test = active;
-    });
-    ASSERT_FALSE(test);
+    ASSERT_FALSE(p1.active());
+    ASSERT_FALSE(p2.active());
+}
 
+TEST(petition, copyLeft) {
+
+    petition p1;
+    petition p2;
+    petition p3;
+
+    p3 = p2;
+    p2 = p1;
+
+    p1.close();
+
+    ASSERT_FALSE(p1.active());
+    ASSERT_FALSE(p2.active());
+    ASSERT_FALSE(p3.active());
+}
+
+
+TEST(petition, copyRight) {
+
+    petition p1;
+    petition p2;
+    petition p3;
+
+    p2 >> p3;
+    p1 >> p2;
+
+    p1.close();
+
+    ASSERT_FALSE(p1.active());
+    ASSERT_FALSE(p2.active());
+    ASSERT_FALSE(p3.active());
 }
 
 TEST(petition, multithread) {
@@ -68,10 +70,7 @@ TEST(petition, multithread) {
     for(int i=0; i<1000; i++)
     {
         threads.push_back(std::thread([&test, p]() mutable {
-            p.process<std::function<void()>>([&test, p]() mutable {
-                test++;
-                p.close();
-            });
+            test += p.close() ? 1 : 0;
         }));
     }
     ASSERT_EQ(1, test);
