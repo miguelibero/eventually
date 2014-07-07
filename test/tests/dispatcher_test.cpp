@@ -7,7 +7,7 @@ using namespace eventually;
 
 TEST(dispatcher, process_single) {
 
-    dispatcher<std::function<void()>> d;
+    dispatcher d;
 
     bool test = false;
     auto pet = d.dispatch([&test](){
@@ -30,7 +30,7 @@ TEST(dispatcher, process_single) {
 
 TEST(dispatcher, process_stepped) {
 
-    dispatcher<std::function<void()>> d;
+    dispatcher d;
 
     bool test = false;
     petition pet;
@@ -53,7 +53,7 @@ TEST(dispatcher, process_stepped) {
 
 TEST(dispatcher, process_stepped_cancel) {
 
-    dispatcher<std::function<void()>> d;
+    dispatcher d;
 
     bool test = false;
     petition pet;

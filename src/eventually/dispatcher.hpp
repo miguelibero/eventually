@@ -2,27 +2,22 @@
 #ifndef _eventually_dispatcher_hpp_
 #define _eventually_dispatcher_hpp_
 
-#include <eventually/petition.hpp>
-#include <vector>
-#include <functional>
+#include <eventually/task_queue.hpp>
 
 namespace eventually {
 
     class petition;
 
-    template<typename F>
     class dispatcher
     {
     private:
-        std::vector<std::pair<petition,F>> _petitions;
-        std::mutex _petitions_mutex;        
+        task_queue _queue;
     public:
-        inline petition dispatch(const F& function);
-        inline void process();
+        petition dispatch(const task::handler& handler);
+        void process();
     };
 
 }
 
-#include <eventually/dispatcher.impl.hpp>
 
 #endif

@@ -15,22 +15,22 @@ namespace eventually {
 
     bool petition::close()
     {
-        std::lock_guard<decltype(_data_mutex)> lock(_data_mutex);
+        std::lock_guard<std::mutex> lock(_data_mutex);
         return (*_data)->close();
     }
 
     bool petition::active() const
     {
-        std::lock_guard<decltype(_data_mutex)> lock(_data_mutex);
+        std::lock_guard<std::mutex> lock(_data_mutex);
         return (*_data)->active();
     }
 
     void petition::make_equal_to(const petition& other)
     {
-        std::lock_guard<decltype(_data_mutex)> lock(_data_mutex);
+        std::lock_guard<std::mutex> lock(_data_mutex);
         if(other._data != _data || *other._data != *_data)
         {
-            std::lock_guard<decltype(other._data_mutex)> lock(other._data_mutex);
+            std::lock_guard<std::mutex> lock(other._data_mutex);
             *_data = *other._data;
             other._data = _data;
         }
