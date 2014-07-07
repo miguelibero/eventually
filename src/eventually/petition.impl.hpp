@@ -28,7 +28,7 @@ namespace eventually {
         return (*_data)->active();
     }
 
-    void petition::make_equal_to(const petition& other) const
+    void petition::make_equal_to(const petition& other)
     {
         std::lock_guard<decltype(_data_mutex)> lock(_data_mutex);
         if(other._data != _data || *other._data != *_data)
@@ -45,7 +45,7 @@ namespace eventually {
         return *this;
     }
 
-    petition& petition::operator>>(const petition& other)
+    const petition petition::operator>>(petition other) const
     {
         other.make_equal_to(*this);
         return *this;

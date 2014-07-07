@@ -17,7 +17,7 @@ TEST(petition, active) {
     ASSERT_FALSE(p.active());
 }
 
-TEST(petition, copyCtor) {
+TEST(petition, copy_ctor) {
 
     petition p1;
     petition p2(p1);
@@ -28,7 +28,7 @@ TEST(petition, copyCtor) {
     ASSERT_FALSE(p2.active());
 }
 
-TEST(petition, copyLeft) {
+TEST(petition, copy_left) {
 
     petition p1;
     petition p2;
@@ -45,7 +45,7 @@ TEST(petition, copyLeft) {
 }
 
 
-TEST(petition, copyRight) {
+TEST(petition, copy_right) {
 
     petition p1;
     petition p2;

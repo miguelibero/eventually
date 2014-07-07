@@ -15,14 +15,14 @@ namespace eventually {
     private:
         mutable std::mutex _data_mutex;
         mutable std::shared_ptr<std::shared_ptr<petition_data>> _data;
-        inline void make_equal_to(const petition& other) const;
+        inline void make_equal_to(const petition& other);
     public:
         inline petition();
         inline petition(const petition& other);
         inline bool close();
         inline bool active() const;
         inline petition& operator=(const petition& other);
-        inline petition& operator>>(const petition& other);
+        inline const petition operator>>(petition other) const;
     };
 
     class petition_data
