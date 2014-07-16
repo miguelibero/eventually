@@ -3,22 +3,7 @@
 
 namespace eventually {
 
-	task::task(const handler& handler):
-	_handler(handler)
+	basic_task::~basic_task()
 	{
 	}
-
-	petition& task::get_petition()
-	{
-		return _petition;
-	}
-	
-	void task::operator()()
-	{
-		if(_petition.active() && _handler != nullptr)
-		{
-			_handler();
-		}
-	}
-
 }

@@ -1,25 +1,35 @@
 
-#ifndef _eventually_dispatcher_impl_hpp_
-#define _eventually_dispatcher_impl_hpp_
 
 #include <eventually/dispatcher.hpp>
 
 namespace eventually {
 
-    petition dispatcher::dispatch(const task::handler& handler)
+    bool dispatcher::process_all()
     {
-        return _queue.push_back(handler);
+        bool result_ = false;
+        while(process_one())
+        {
+            result_ = true;
+        }
+
+        return result_;
     }
 
-    void dispatcher::process()
+    bool dispatcher::process_one()
     {
-        task t;
-        while(_queue.try_pop_front(t))
+        basic_task_ptr task_;
         {
-            t();   
+            std::lock_guard<std::mutex> lock_(_mutex);
+            if(_tasks.empty())
+            {
+                return false;
+            }
+            task_ = std::move(_tasks.front());
+            _tasks.pop_front();
         }
+        (*task_)();
+        return true;
     }
+
 
 }
-
-#endif

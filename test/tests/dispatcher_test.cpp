@@ -5,73 +5,37 @@
 
 using namespace eventually;
 
-TEST(dispatcher, process_single) {
+TEST(dispatcher, process_one) {
 
     dispatcher d;
 
-    bool test = false;
-    auto pet = d.dispatch([&test](){
-        test = true;
-    });
+    auto future1 = d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3);
 
-    d.process();
-    ASSERT_TRUE(test);
+    auto future2 = d.dispatch([](int a, int b){
+        return a-b;
+    }, 2, 3);
 
-    test = false;
-    pet = d.dispatch([&test](){
-        test = true;
-    });
-    pet.close();
-    d.process();
-    ASSERT_FALSE(test);
+    ASSERT_TRUE(future1.valid());
 
+    d.process_one();
+
+    ASSERT_EQ(5, future1.get());
 }
 
 
-TEST(dispatcher, process_stepped) {
+TEST(dispatcher, process_all) {
 
     dispatcher d;
 
-    bool test = false;
-    petition pet;
+    auto future = d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3);
 
-    pet >> d.dispatch([&d, &test, pet](){
+    ASSERT_TRUE(future.valid());
 
-        pet >> d.dispatch([&test, pet](){
-            test = true;
-        });
+    d.process_one();
 
-    });
-
-    d.process();
-    ASSERT_FALSE(test);
-    d.process();
-    ASSERT_TRUE(test);
-
-}
-
-
-TEST(dispatcher, process_stepped_cancel) {
-
-    dispatcher d;
-
-    bool test = false;
-    petition pet;
-
-    pet >> d.dispatch([&d, &test, pet](){
-
-        pet >> d.dispatch([&test, pet](){
-            test = true;
-        });
-
-    });
-
-    d.process();
-    ASSERT_FALSE(test);
-
-    pet.close();
-
-    d.process();
-    ASSERT_FALSE(test);
-
+    ASSERT_EQ(5, future.get());
 }

@@ -2,23 +2,64 @@
 #ifndef _eventually_task_hpp_
 #define _eventually_task_hpp_
 
+#include <future>
 #include <functional>
-#include <eventually/petition.hpp>
 
 namespace eventually {
 
-	class task
+	class basic_task
 	{
-	public:
-		typedef std::function<void()> handler;
-	private:
-		handler _handler;
-		petition _petition;
 
 	public:
-		task(const handler& handler=nullptr);
-		petition& get_petition();
-		void operator()();
+		virtual ~basic_task();
+		virtual void operator()() = 0;
+	};
+
+
+ 	template<class Result>
+	class task : public basic_task
+	{
+	private:
+		typedef std::packaged_task<Result()> internal_task;
+		internal_task _task;
+
+	public:
+
+		template<class Function, class... Args>
+		task(Function&& f, Args&&... args):
+		_task(std::bind(f, args...))
+		{
+		}
+		 
+		std::future<Result> get_future()
+		{
+			return _task.get_future();
+		}
+		 
+		void operator()()
+		{
+			_task();
+		}
+
+		bool valid() const noexcept
+		{
+			return _task.valid();
+		}
+
+		void swap( task& other ) noexcept
+		{
+			_task.swap(other._task);
+		}
+		 
+		void make_ready_at_thread_exit()
+		{
+			_task.make_ready_at_thread_exit();
+		}
+		 
+		void reset()
+		{
+			_task.reset();
+		}
 	};
 }
 
