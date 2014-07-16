@@ -1,6 +1,5 @@
 
 #include <eventually/dispatcher.hpp>
-#include <functional>
 #include "gtest/gtest.h"
 
 using namespace eventually;
@@ -11,10 +10,6 @@ TEST(dispatcher, process_one) {
 
     auto future1 = d.dispatch([](int a, int b){
         return a+b;
-    }, 2, 3);
-
-    auto future2 = d.dispatch([](int a, int b){
-        return a-b;
     }, 2, 3);
 
     ASSERT_TRUE(future1.valid());
@@ -29,13 +24,19 @@ TEST(dispatcher, process_all) {
 
     dispatcher d;
 
-    auto future = d.dispatch([](int a, int b){
+    auto future1 = d.dispatch([](int a, int b){
         return a+b;
     }, 2, 3);
 
-    ASSERT_TRUE(future.valid());
+    auto future2 = d.dispatch([](int a, int b){
+        return a-b;
+    }, 2, 3);
 
-    d.process_one();
+    ASSERT_TRUE(future1.valid());
+    ASSERT_TRUE(future2.valid());
 
-    ASSERT_EQ(5, future.get());
+    d.process_all();
+
+    ASSERT_EQ(5, future1.get());
+    ASSERT_EQ(-1, future2.get());
 }

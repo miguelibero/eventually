@@ -9,7 +9,6 @@ namespace eventually {
 
 	class basic_task
 	{
-
 	public:
 		virtual ~basic_task();
 		virtual void operator()() = 0;

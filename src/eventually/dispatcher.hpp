@@ -33,7 +33,6 @@ namespace eventually {
         bool process_all();
         bool process_one();
 
-
     };
 }
 
