@@ -3,7 +3,7 @@
 
 namespace eventually {
 
-	basic_task::~basic_task()
-	{
-	}
+    basic_task::~basic_task()
+    {
+    }
 }

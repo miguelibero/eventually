@@ -14,14 +14,14 @@ namespace eventually {
     {
 
     public:
-    	typedef std::chrono::duration<double> duration;
+        typedef std::chrono::duration<double> duration;
     private:
-    	duration _wait;
-    	std::vector<std::thread> _threads;
-    	std::atomic_bool _done;
+        duration _wait;
+        std::vector<std::thread> _threads;
+        std::atomic_bool _done;
 
-    	void worker_thread(size_t i);
-    public:		
+        void worker_thread(size_t i);
+    public:
         thread_dispatcher(const duration& wait=duration::zero(), size_t thread_count=std::thread::hardware_concurrency());
         ~thread_dispatcher();
     };

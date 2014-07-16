@@ -1,5 +1,4 @@
 
-
 #include <eventually/dispatcher.hpp>
 
 namespace eventually {
