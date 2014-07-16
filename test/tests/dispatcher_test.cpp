@@ -1,77 +1,42 @@
 
 #include <eventually/dispatcher.hpp>
-#include <functional>
 #include "gtest/gtest.h"
 
 using namespace eventually;
 
-TEST(dispatcher, process_single) {
+TEST(dispatcher, process_one) {
 
-    dispatcher<std::function<void()>> d;
+    dispatcher d;
 
-    bool test = false;
-    auto pet = d.dispatch([&test](){
-        test = true;
-    });
+    auto future1 = d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3);
 
-    d.process();
-    ASSERT_TRUE(test);
+    ASSERT_TRUE(future1.valid());
 
-    test = false;
-    pet = d.dispatch([&test](){
-        test = true;
-    });
-    pet.close();
-    d.process();
-    ASSERT_FALSE(test);
+    d.process_one();
 
+    ASSERT_EQ(5, future1.get());
 }
 
 
-TEST(dispatcher, process_stepped) {
+TEST(dispatcher, process_all) {
 
-    dispatcher<std::function<void()>> d;
+    dispatcher d;
 
-    bool test = false;
-    petition pet;
+    auto future1 = d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3);
 
-    pet >> d.dispatch([&d, &test, pet](){
+    auto future2 = d.dispatch([](int a, int b){
+        return a-b;
+    }, 2, 3);
 
-        pet >> d.dispatch([&test, pet](){
-            test = true;
-        });
+    ASSERT_TRUE(future1.valid());
+    ASSERT_TRUE(future2.valid());
 
-    });
+    d.process_all();
 
-    d.process();
-    ASSERT_FALSE(test);
-    d.process();
-    ASSERT_TRUE(test);
-
-}
-
-
-TEST(dispatcher, process_stepped_cancel) {
-
-    dispatcher<std::function<void()>> d;
-
-    bool test = false;
-    petition pet;
-
-    pet >> d.dispatch([&d, &test, pet](){
-
-        pet >> d.dispatch([&test, pet](){
-            test = true;
-        });
-
-    });
-
-    d.process();
-    ASSERT_FALSE(test);
-
-    pet.close();
-
-    d.process();
-    ASSERT_FALSE(test);
-
+    ASSERT_EQ(5, future1.get());
+    ASSERT_EQ(-1, future2.get());
 }
