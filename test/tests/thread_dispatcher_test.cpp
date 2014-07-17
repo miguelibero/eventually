@@ -43,8 +43,6 @@ TEST(thread_dispatcher, then_combined) {
     ASSERT_FLOAT_EQ(10.0f, future.get());
 }
 
-
-
 TEST(dispatcher, connection_interrupt) {
 
     thread_dispatcher d;
@@ -59,4 +57,18 @@ TEST(dispatcher, connection_interrupt) {
     c.interrupt();
 
     ASSERT_FALSE(done);
+}
+
+TEST(thread_dispatcher, then_combined_scoped_connection) {
+
+    thread_dispatcher d;
+    {
+        scoped_connection c;
+
+        d.then(c, d.dispatch(c, [](int a, int b){
+            return a+b;
+        }, 2, 3), [](int c){
+            return 2.0f*c;
+        });
+    }
 }

@@ -91,6 +91,33 @@ TEST(dispatcher, connection) {
     ASSERT_FALSE(done);
 }
 
+TEST(dispatcher, connection_interrupted_exception) {
+
+    dispatcher d;
+    connection c;
+
+    bool done = false;
+    auto f = d.dispatch(c, [&done](){
+        done = true;
+    });
+
+    c.interrupt();
+
+    d.process_all();
+
+    bool interrupted = false;
+    try
+    {
+        f.get();
+    }
+    catch(connection_interrupted&)
+    {
+        interrupted = true;
+    }
+
+    ASSERT_TRUE(interrupted);
+}
+
 TEST(dispatcher, process_all) {
 
     dispatcher d;

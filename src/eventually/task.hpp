@@ -19,8 +19,10 @@ namespace eventually {
     class task : public basic_task
     {
     private:
-        connection _connection;        
         typedef std::packaged_task<Result()> internal_task;
+        typedef std::function<Result()> handler;
+        connection _connection;        
+        handler _handler;
         internal_task _task;
 
     public:
@@ -33,7 +35,8 @@ namespace eventually {
 
         template<class Work, class... Args>
         task(connection& c, Work&& w, Args&&... args):
-        _connection(c), _task(std::bind(w, args...))
+        _connection(c), _handler(std::bind(w, args...)),
+        _task(std::bind(&task::run_task, this))
         {
         }
          
@@ -51,16 +54,16 @@ namespace eventually {
         {
             return _connection;
         }
+
+        Result run_task()
+        {
+            _connection.interruption_point();
+            return _handler();
+        }
          
         void operator()()
         {
-            try
-            {
-                _connection.interruption_point();
-                _task();
-            }catch(connection_interrupted&)
-            {
-            }
+            _task();
         }
 
         bool valid() const noexcept
