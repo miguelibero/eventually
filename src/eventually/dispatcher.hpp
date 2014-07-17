@@ -3,6 +3,7 @@
 #define _eventually_dispatcher_hpp_
 
 #include <eventually/task.hpp>
+#include <eventually/connection.hpp>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -36,6 +37,17 @@ namespace eventually {
         {
             std::unique_ptr<task<decltype(w(args...))>> task_(
                 new task<decltype(w(args...))>(w, args...));
+            auto future_ = task_->get_future();
+            std::lock_guard<std::mutex> lock_(_mutex);
+            _tasks.push_back(std::move(task_));
+            return future_;
+        }
+
+        template<class Work, class... Args>
+        auto dispatch(connection& c, Work&& w, Args&&... args) ->  std::future<decltype(w(args...))>
+        {
+            std::unique_ptr<task<decltype(w(args...))>> task_(
+                new task<decltype(w(args...))>(c, w, args...));
             auto future_ = task_->get_future();
             std::lock_guard<std::mutex> lock_(_mutex);
             _tasks.push_back(std::move(task_));

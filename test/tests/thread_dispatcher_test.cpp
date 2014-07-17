@@ -19,7 +19,7 @@ TEST(thread_dispatcher, process) {
 
 TEST(thread_dispatcher, process_wait) {
 
-    thread_dispatcher d(thread_dispatcher::duration(0.5));
+    thread_dispatcher d(thread_dispatcher::duration(0.01));
 
     auto future1 = d.dispatch([](int a, int b){
         return a+b;
@@ -29,8 +29,6 @@ TEST(thread_dispatcher, process_wait) {
 
     ASSERT_EQ(5, future1.get());
 }
-
-
 
 TEST(thread_dispatcher, then_combined) {
 
@@ -43,4 +41,22 @@ TEST(thread_dispatcher, then_combined) {
     });
 
     ASSERT_FLOAT_EQ(10.0f, future.get());
+}
+
+
+
+TEST(dispatcher, connection_interrupt) {
+
+    thread_dispatcher d;
+    connection c;
+
+    bool done = false;
+    d.dispatch(c, [c, &done]() mutable {
+        std::this_thread::sleep_for(std::chrono::duration<float>(0.01f));
+        c.interruption_point();
+        done = true;
+    });
+    c.interrupt();
+
+    ASSERT_FALSE(done);
 }
