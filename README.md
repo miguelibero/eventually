@@ -60,6 +60,10 @@ auto result = future.get();
 
 ## Usage example
 
+This example shows how to implement an http client that uses a thread dispatcher
+to do the http requests without blocking. Then there is a widget class that wants
+to get an http response and process it in the main thread.
+
 ```c++
 class http_client
 {
