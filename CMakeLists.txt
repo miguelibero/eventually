@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8) 
 
-list( APPEND CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas")
+list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas")
 
 ADD_DEFINITIONS(
     -std=c++11 # Or -std=c++0x
