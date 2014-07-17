@@ -6,7 +6,6 @@
 #include <deque>
 #include <memory>
 #include <mutex>
-#include <type_traits>
 
 namespace eventually {
 
@@ -33,7 +32,7 @@ namespace eventually {
     public:
 
         template<class Work, class... Args>
-        std::future<typename std::result_of<Work(Args...)>::type> dispatch(Work&& w, Args&&... args)
+        auto dispatch(Work&& w, Args&&... args) ->  std::future<decltype(w(args...))>
         {
             std::unique_ptr<task<decltype(w(args...))>> task_(
                 new task<decltype(w(args...))>(w, args...));
