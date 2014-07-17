@@ -17,6 +17,19 @@ TEST(thread_dispatcher, process) {
     ASSERT_EQ(5, future1.get());
 }
 
+TEST(thread_dispatcher, process_wait) {
+
+    thread_dispatcher d(thread_dispatcher::duration(0.5));
+
+    auto future1 = d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3);
+
+    ASSERT_TRUE(future1.valid());
+
+    ASSERT_EQ(5, future1.get());
+}
+
 
 
 TEST(thread_dispatcher, then_combined) {
