@@ -4,9 +4,9 @@
 
 #include <eventually/task.hpp>
 #include <deque>
-#include <type_traits>
 #include <memory>
 #include <mutex>
+#include <type_traits>
 
 namespace eventually {
 
@@ -17,17 +17,44 @@ namespace eventually {
         std::mutex _mutex;
         std::deque<basic_task_ptr> _tasks;
 
+        template <typename Result, typename Work>
+        static auto get_work_done(std::shared_future<Result>& f, Work& w) -> decltype(w(f.get()))
+        {
+            return w(f.get());
+        }
+
+        template <typename Work>
+        static auto get_work_done(std::shared_future<void>& f, Work& w) -> decltype(w())
+        {
+            f.wait();
+            return w();
+        }
+
     public:
 
-        template<class Function, class... Args>
-        std::future<typename std::result_of<Function(Args...)>::type> dispatch(Function&& f, Args&&... args)
+        template<class Work, class... Args>
+        std::future<typename std::result_of<Work(Args...)>::type> dispatch(Work&& w, Args&&... args)
         {
-            std::unique_ptr<task<typename std::result_of<Function(Args...)>::type>> task_(
-                new task<typename std::result_of<Function(Args...)>::type>(f, args...));
+            std::unique_ptr<task<decltype(w(args...))>> task_(
+                new task<decltype(w(args...))>(w, args...));
             auto future_ = task_->get_future();
             std::lock_guard<std::mutex> lock_(_mutex);
             _tasks.push_back(std::move(task_));
             return future_;
+        }
+
+        template <class Result, class Work>
+        auto then(std::future<Result>&& f, Work&& w) -> std::future<decltype(w(f.get()))>
+        {
+            return then(f.share(), w);
+        }
+
+        template <class Result, class Work>
+        auto then(std::shared_future<Result> f, Work&& w) -> std::future<decltype(w(f.get()))>
+        {
+            return dispatch([](std::shared_future<Result> f, Work w){
+                return get_work_done(f, w);
+            }, f, w);
         }
 
         bool process_all();
