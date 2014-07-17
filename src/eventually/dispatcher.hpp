@@ -4,7 +4,6 @@
 
 #include <eventually/task.hpp>
 #include <deque>
-#include <type_traits>
 #include <memory>
 #include <mutex>
 
@@ -20,10 +19,10 @@ namespace eventually {
     public:
 
         template<class Work, class... Args>
-        std::future<typename std::result_of<Work(Args...)>::type> dispatch(Work&& f, Args&&... args)
+        auto dispatch(Work&& w, Args&&... args) -> std::future<decltype(w(args...))>
         {
-            std::unique_ptr<task<typename std::result_of<Work(Args...)>::type>> task_(
-                new task<typename std::result_of<Work(Args...)>::type>(f, args...));
+            std::unique_ptr<task<decltype(w(args...))>> task_(
+                new task<decltype(w(args...))>(w, args...));
             auto future_ = task_->get_future();
             std::lock_guard<std::mutex> lock_(_mutex);
             _tasks.push_back(std::move(task_));

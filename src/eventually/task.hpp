@@ -23,9 +23,9 @@ namespace eventually {
 
     public:
 
-        template<class Function, class... Args>
-        task(Function&& f, Args&&... args):
-        _task(std::bind(f, args...))
+        template<class Work, class... Args>
+        task(Work&& w, Args&&... args):
+        _task(std::bind(w, args...))
         {
         }
          
