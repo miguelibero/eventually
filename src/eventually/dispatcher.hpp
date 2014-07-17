@@ -19,11 +19,11 @@ namespace eventually {
 
     public:
 
-        template<class Function, class... Args>
-        std::future<typename std::result_of<Function(Args...)>::type> dispatch(Function&& f, Args&&... args)
+        template<class Work, class... Args>
+        std::future<typename std::result_of<Work(Args...)>::type> dispatch(Work&& f, Args&&... args)
         {
-            std::unique_ptr<task<typename std::result_of<Function(Args...)>::type>> task_(
-                new task<typename std::result_of<Function(Args...)>::type>(f, args...));
+            std::unique_ptr<task<typename std::result_of<Work(Args...)>::type>> task_(
+                new task<typename std::result_of<Work(Args...)>::type>(f, args...));
             auto future_ = task_->get_future();
             std::lock_guard<std::mutex> lock_(_mutex);
             _tasks.push_back(std::move(task_));

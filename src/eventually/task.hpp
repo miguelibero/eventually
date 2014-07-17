@@ -14,7 +14,6 @@ namespace eventually {
         virtual void operator()() = 0;
     };
 
-
     template<class Result>
     class task : public basic_task
     {
