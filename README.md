@@ -50,13 +50,14 @@ auto f = d.dispatch(c, (int a, int b){
 }, 2, 3);
 
 c.interrupt();
+d.process_one();
 
 // would throw eventually::connection_interrupted
 auto result = f.get();
 ```
 
-`eventually::thread_dispatcher` dispatches the tasks in a finite amount of threads
-( by default `std::thread::hardware_concurrency()`).
+`eventually::thread_dispatcher` processes the tasks in a finite amount of threads
+(by default `std::thread::hardware_concurrency()`).
 
 ## Usage example
 
