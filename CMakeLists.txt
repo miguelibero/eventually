@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 2.8) 
 
-list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas")
-
-ADD_DEFINITIONS(
-    -std=c++11 # Or -std=c++0x
-    # Other flags
-)
-
+list(APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas")
 
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )

@@ -49,8 +49,9 @@ TEST(dispatcher, connection_interrupt) {
     connection c;
 
     bool done = false;
-    d.dispatch(c, [c, &done]() mutable {
-        std::this_thread::sleep_for(std::chrono::duration<float>(0.01f));
+    std::atomic_bool block(true);
+    d.dispatch(c, [c, &block, &done]() mutable {
+        std::this_thread::sleep_for(std::chrono::duration<float>(0.02f));
         c.interruption_point();
         done = true;
     });

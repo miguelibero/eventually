@@ -8,6 +8,10 @@
 
 namespace eventually {
 
+    /**
+     * A basic interface to store tasks of different results
+     * in the same dispatcher.
+     */
     class basic_task
     {
     public:
@@ -15,6 +19,9 @@ namespace eventually {
         virtual void operator()() = 0;
     };
 
+    /**
+     * A container for a std::packaged_task and the associated connection
+     */
     template<class Result>
     class task : public basic_task
     {
@@ -36,7 +43,7 @@ namespace eventually {
         template<class Work, class... Args>
         task(connection& c, Work&& w, Args&&... args):
         _connection(c), _handler(std::bind(w, args...)),
-        _task(std::bind(&task::run_task, this))
+        _task(std::bind(&task::get_work_done, this))
         {
         }
          
@@ -55,10 +62,9 @@ namespace eventually {
             return _connection;
         }
 
-        Result run_task()
+        Result get_work_done()
         {
-            _connection.interruption_point();
-            return _handler();
+            return _connection.get_work_done(_handler);
         }
          
         void operator()()

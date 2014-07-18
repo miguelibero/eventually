@@ -10,6 +10,10 @@
 
 namespace eventually {
 
+    /**
+     * This is a base class for an object that provides std::async like functionality.
+     * It stores a list of function objects to be processed some time in the future.
+     */
     class dispatcher
     {
     private:
