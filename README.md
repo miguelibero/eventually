@@ -17,7 +17,7 @@ std::future<int> f = d.dispatch([](int a, int b){
 // this will call the dispatched lambda
 d.process_one();
 
-// will return 5.0f
+// will return 5
 auto result = f.get();
 ```
 
@@ -71,7 +71,7 @@ class http_client
 private:
     eventually::thread_dispatcher _dispatcher;
 
-    http_response send_dispatched(eventually::connection& conn. http_request req)
+    http_response send_dispatched(eventually::connection& conn, http_request& req)
     {
         // this happens in another thread
         // do http request
@@ -92,7 +92,7 @@ class widget
 private:
     eventually::scoped_connection _http_conn;
     http_client& _http_client;
-    eventually::dispatcher& _dispatcher:
+    eventually::dispatcher& _main_dispatcher;
 
     void on_http_response(http_response resp)
     {
@@ -108,11 +108,11 @@ public:
 
     void init()
     {
+        http_request req("http://eventually.io/test.png");
         _main_dispatcher.then(_http_conn, _http_client.send(_http_conn, req),
             std::bind(&widget::on_http_response, std::placeholders::_1));
     }
-}
-
+};
 
 http_client c;
 // this dispatcher should be processed in the main thread

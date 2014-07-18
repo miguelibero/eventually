@@ -36,12 +36,13 @@ namespace eventually {
 
         template<class Work, class... Args>
         task(Work&& w, Args&&... args):
-        _task(std::bind(w, args...))
+        _handler(std::bind(w, args...)),
+        _task(std::bind(&task::get_work_done, this))
         {
         }
 
         template<class Work, class... Args>
-        task(connection& c, Work&& w, Args&&... args):
+        task(connection& c, Work w, Args... args):
         _connection(c), _handler(std::bind(w, args...)),
         _task(std::bind(&task::get_work_done, this))
         {

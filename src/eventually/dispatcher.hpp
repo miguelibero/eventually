@@ -4,6 +4,7 @@
 
 #include <eventually/task.hpp>
 #include <eventually/connection.hpp>
+#include <functional>
 #include <deque>
 #include <memory>
 #include <mutex>
