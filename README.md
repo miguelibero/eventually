@@ -110,7 +110,7 @@ public:
     {
         http_request req("http://eventually.io/test.png");
         _main_dispatcher.then(_http_conn, _http_client.send(_http_conn, req),
-            std::bind(&widget::on_http_response, std::placeholders::_1));
+            std::bind(&widget::on_http_response, this, std::placeholders::_1));
     }
 };
 
