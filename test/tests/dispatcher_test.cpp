@@ -55,8 +55,6 @@ TEST(dispatcher, then) {
     ASSERT_FLOAT_EQ(10.0f, f2.get());
 }
 
-/*
-
 TEST(dispatcher, then_bind) {
 
     dispatcher d;
@@ -179,4 +177,3 @@ TEST(dispatcher, process_all) {
     ASSERT_EQ(5, f1.get());
     ASSERT_EQ(-1, f2.get());
 }
-*/

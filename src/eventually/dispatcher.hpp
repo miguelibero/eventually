@@ -28,6 +28,7 @@ namespace eventually {
             return w(f.get());
         }
 
+        
         template <typename Work>
         static auto get_work_done(std::shared_future<void>& f, Work& w) -> decltype(w())
         {
@@ -66,7 +67,9 @@ namespace eventually {
         template <class Result, class Work>
         auto then(std::shared_future<Result> f, Work&& w) noexcept -> std::future<decltype(w(f.get()))>
         {
-            return dispatch(std::bind(&get_work_done, f, w));
+            return dispatch([f, w]() mutable {
+                return get_work_done(f, w);
+            });
         }
 
         template <class Result, class Work>
@@ -78,9 +81,9 @@ namespace eventually {
         template <class Result, class Work>
         auto then(connection& c, std::shared_future<Result> f, Work&& w) noexcept -> std::future<decltype(w(f.get()))>
         {
-            return dispatch(c, [](std::shared_future<Result>& f, Work&& w){
-                return get_work_done(f, std::forward<Work>(w));
-            }, f, std::forward<Work>(w));
+            return dispatch(c, [f, w]() mutable {
+                return get_work_done(f, w);
+            });
         }
 
         bool process_all() noexcept;

@@ -11,7 +11,7 @@ namespace eventually {
 
     /**
      * A basic interface to store tasks of different results
-     * in the same dispatcher.
+     * in the same dispatcher
      */
     class basic_task
     {
@@ -21,7 +21,8 @@ namespace eventually {
     };
 
     /**
-     * A container for a std::packaged_task and the associated connection
+     * A container for a std::packaged_task and the
+     * associated handler and connection
      */
     template<class Result, class... Args>
     class task : public basic_task
@@ -96,7 +97,9 @@ namespace eventually {
         }
     };
 
-
+    /**
+     * Helper method to generate task pointers
+     */
     template <typename Work, typename... Args>
     auto make_task_ptr(Work&& w, Args&&... args) -> std::unique_ptr<task<decltype(w(args...)), Args...>>
     {

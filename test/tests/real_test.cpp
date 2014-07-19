@@ -1,5 +1,4 @@
 
-/*
 #include <eventually/thread_dispatcher.hpp>
 #include <functional>
 #include "gtest/gtest.h"
@@ -57,7 +56,12 @@ public:
     {
         http_request req;
         _main_dispatcher.then(_http_conn, _http_client.send(_http_conn, req),
-            [this](http_response resp){ on_http_response(resp); });
+            std::bind(&widget::on_http_response, this, std::placeholders::_1));
+    }
+
+    bool finished() const
+    {
+        return _finished;
     }
 };
 
@@ -72,5 +76,3 @@ TEST(real, http_client) {
     }
 
 }
-
-*/
