@@ -37,7 +37,7 @@ TEST(dispatcher, bind) {
     ASSERT_EQ(9, f.get());
 }
 
-TEST(dispatcher, then) {
+TEST(dispatcher, when) {
 
     dispatcher d;
 
@@ -45,7 +45,7 @@ TEST(dispatcher, then) {
         return a+b;
     }, 2, 3);
 
-    auto f2 = d.then(std::move(f1), [](int c){
+    auto f2 = d.when(std::move(f1), [](int c){
         return 2.0f*c ;
     });
 
@@ -55,7 +55,7 @@ TEST(dispatcher, then) {
     ASSERT_FLOAT_EQ(10.0f, f2.get());
 }
 
-TEST(dispatcher, then_bind) {
+TEST(dispatcher, when_bind) {
 
     dispatcher d;
 
@@ -68,7 +68,7 @@ TEST(dispatcher, then_bind) {
     };
 
     auto f1 = d.dispatch(std::bind(func1, _1, _2, 4), 2, 3);
-    auto f2 = d.then(std::move(f1), std::bind(func2, _1, 2.0f));
+    auto f2 = d.when(std::move(f1), std::bind(func2, _1, 2.0f));
 
     d.process_one();
     d.process_one();
@@ -76,7 +76,7 @@ TEST(dispatcher, then_bind) {
     ASSERT_FLOAT_EQ(18.0f, f2.get());
 }
 
-TEST(dispatcher, then_shared) {
+TEST(dispatcher, when_shared) {
 
     dispatcher d;
 
@@ -84,7 +84,7 @@ TEST(dispatcher, then_shared) {
         return a+b;
     }, 2, 3).share();
 
-    auto f2 = d.then(f1, [](int c){
+    auto f2 = d.when(f1, [](int c){
         return 2.0f*c ;
     });
 
@@ -97,11 +97,11 @@ TEST(dispatcher, then_shared) {
     ASSERT_FLOAT_EQ(10.0f, f2.get());
 }
 
-TEST(dispatcher, then_combined) {
+TEST(dispatcher, when_combined) {
 
     dispatcher d;
 
-    auto f = d.then(d.dispatch([](int a, int b){
+    auto f = d.when(d.dispatch([](int a, int b){
         return a+b;
     }, 2, 3), [](int c){
         return 2.0f*c ;

@@ -1,5 +1,4 @@
 
-/*
 #include <eventually/thread_dispatcher.hpp>
 #include "gtest/gtest.h"
 
@@ -31,11 +30,11 @@ TEST(thread_dispatcher, process_wait) {
     ASSERT_EQ(5, future1.get());
 }
 
-TEST(thread_dispatcher, then_combined) {
+TEST(thread_dispatcher, when_combined) {
 
     thread_dispatcher d;
 
-    auto future = d.then(d.dispatch([](int a, int b){
+    auto future = d.when(d.dispatch([](int a, int b){
         return a+b;
     }, 2, 3), [](int c){
         return 2.0f*c ;
@@ -61,17 +60,16 @@ TEST(dispatcher, connection_interrupt) {
     ASSERT_FALSE(done);
 }
 
-TEST(thread_dispatcher, then_combined_scoped_connection) {
+TEST(thread_dispatcher, when_combined_scoped_connection) {
 
     thread_dispatcher d;
     {
         scoped_connection c;
 
-        d.then(c, d.dispatch(c, [](int a, int b){
+        d.when(c, d.dispatch(c, [](int a, int b){
             return a+b;
         }, 2, 3), [](int c){
             return 2.0f*c;
         });
     }
 }
-*/

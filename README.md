@@ -21,12 +21,12 @@ d.process_one();
 auto result = f.get();
 ```
 
-It has `then` support to concatenate tasks.
+It has `when` support to concatenate tasks.
 
 ```c++
 dispatcher d;
 
-auto f = d.then(d.dispatch([](int a, int b){
+auto f = d.when(d.dispatch([](int a, int b){
     return a+b;
 }, 2, 3), [](int c){
     return 2.0f*c ;
@@ -62,7 +62,7 @@ auto result = f.get();
 ## Usage example
 
 This example shows how to implement an http client that uses a thread dispatcher
-to do the http requests without blocking. Then there is a widget class that wants
+to do the http requests without blocking. when there is a widget class that wants
 to get an http response and process it in the main thread.
 
 ```c++
@@ -109,7 +109,7 @@ public:
     void init()
     {
         http_request req("http://eventually.io/test.png");
-        _main_dispatcher.then(_http_conn, _http_client.send(_http_conn, req),
+        _main_dispatcher.when(_http_conn, _http_client.send(_http_conn, req),
             std::bind(&widget::on_http_response, this, std::placeholders::_1));
     }
 };

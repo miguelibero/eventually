@@ -58,28 +58,35 @@ namespace eventually {
             return future_;
         }
 
-        template <class Result, class Work>
-        auto then(std::future<Result>&& f, Work&& w) noexcept -> std::future<decltype(w(f.get()))>
+        /**
+         * Call a function when a future is ready.
+         * Can be used to concatenate tasks.
+         * @param future to wait for
+         * @param work function
+         * @result future for this task
+         */
+        template <class Work, class Result>
+        auto when(std::future<Result>&& f, Work&& w) noexcept -> std::future<decltype(w(f.get()))>
         {
-            return then(f.share(), std::forward<Work>(w));
+            return when(f.share(), std::forward<Work>(w));
         }
 
-        template <class Result, class Work>
-        auto then(std::shared_future<Result> f, Work&& w) noexcept -> std::future<decltype(w(f.get()))>
+        template <class Work, class Result>
+        auto when(std::shared_future<Result> f, Work&& w) noexcept -> std::future<decltype(w(f.get()))>
         {
             return dispatch([f, w]() mutable {
                 return get_work_done(f, w);
             });
         }
 
-        template <class Result, class Work>
-        auto then(connection& c, std::future<Result>&& f, Work&& w) noexcept -> std::future<decltype(w(f.get()))>
+        template <class Work, class Result>
+        auto when(connection& c, std::future<Result>&& f, Work&& w) noexcept -> std::future<decltype(w(f.get()))>
         {
-            return then(c, f.share(), std::forward<Work>(w));
+            return when(c, f.share(), std::forward<Work>(w));
         }
 
-        template <class Result, class Work>
-        auto then(connection& c, std::shared_future<Result> f, Work&& w) noexcept -> std::future<decltype(w(f.get()))>
+        template <class Work, class Result>
+        auto when(connection& c, std::shared_future<Result> f, Work&& w) noexcept -> std::future<decltype(w(f.get()))>
         {
             return dispatch(c, [f, w]() mutable {
                 return get_work_done(f, w);
