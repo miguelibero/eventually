@@ -3,14 +3,15 @@
 #define _eventually_task_hpp_
 
 #include <future>
-#include <functional>
+#include <memory>
 #include <eventually/connection.hpp>
+#include <eventually/handler.hpp>
 
 namespace eventually {
 
     /**
      * A basic interface to store tasks of different results
-     * in the same dispatcher.
+     * in the same dispatcher
      */
     class basic_task
     {
@@ -20,31 +21,33 @@ namespace eventually {
     };
 
     /**
-     * A container for a std::packaged_task and the associated connection
+     * A container for a std::packaged_task and the
+     * associated handler and connection
      */
-    template<class Result>
+    template<class Result, class... Args>
     class task : public basic_task
     {
     private:
+        typedef handler<Result, Args...> internal_handler;
         typedef std::packaged_task<Result()> internal_task;
-        typedef std::function<Result()> handler;
         connection _connection;        
-        handler _handler;
+        internal_handler _handler;
         internal_task _task;
 
     public:
 
-        template<class Work, class... Args>
+        template<class Work>
         task(Work&& w, Args&&... args):
-        _handler(std::bind(w, args...)),
-        _task(std::bind(&task::get_work_done, this))
+        _handler(std::forward<Work>(w), std::forward<Args>(args)...),
+        _task([this](){ return get_work_done(); })
         {
         }
 
-        template<class Work, class... Args>
-        task(connection& c, Work w, Args... args):
-        _connection(c), _handler(std::bind(w, args...)),
-        _task(std::bind(&task::get_work_done, this))
+        template<class Work>
+        task(connection& c, Work&& w, Args&&... args):
+        _connection(c),
+        _handler(std::forward<Work>(w), std::forward<Args>(args)...),
+        _task([this](){ return get_work_done(); })
         {
         }
          
@@ -93,6 +96,24 @@ namespace eventually {
             _task.reset();
         }
     };
+
+    /**
+     * Helper method to generate task pointers
+     */
+    template <typename Work, typename... Args>
+    auto make_task_ptr(Work&& w, Args&&... args) -> std::unique_ptr<task<decltype(w(args...)), Args...>>
+    {
+        return std::unique_ptr<task<decltype(w(args...)), Args...>>(
+                new task<decltype(w(args...)), Args...>(std::forward<Work>(w), std::forward<Args>(args)...));
+    }
+
+    template <typename Work, typename... Args>
+    auto make_task_ptr(connection& c, Work&& w, Args&&... args) -> std::unique_ptr<task<decltype(w(args...)), Args...>>
+    {
+        return std::unique_ptr<task<decltype(w(args...)), Args...>>(
+                new task<decltype(w(args...)), Args...>(c, std::forward<Work>(w), std::forward<Args>(args)...));
+    }
+    
 }
 
 #endif

@@ -10,6 +10,9 @@
 
 namespace eventually {
 
+    /**
+     * Calls dispatcher process on a set of threads
+     */
     class thread_dispatcher : public dispatcher
     {
 

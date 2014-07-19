@@ -1,8 +1,8 @@
-
-#include <eventually/dispatcher.hpp>
+#include <eventually/eventually.hpp>
 #include "gtest/gtest.h"
 
 using namespace eventually;
+using namespace std::placeholders;
 
 TEST(dispatcher, process_one) {
 
@@ -17,6 +17,24 @@ TEST(dispatcher, process_one) {
     d.process_one();
 
     ASSERT_EQ(5, f.get());
+}
+
+
+TEST(dispatcher, bind) {
+
+    dispatcher d;
+
+    auto func = [](int a, int b, int c){
+        return a+b+c;
+    };
+
+    auto f = d.dispatch(std::bind(func, _1, _2, 4), 2, 3);
+
+    ASSERT_TRUE(f.valid());
+
+    d.process_one();
+
+    ASSERT_EQ(9, f.get());
 }
 
 TEST(dispatcher, then) {
@@ -35,6 +53,27 @@ TEST(dispatcher, then) {
     d.process_one();
 
     ASSERT_FLOAT_EQ(10.0f, f2.get());
+}
+
+TEST(dispatcher, then_bind) {
+
+    dispatcher d;
+
+    auto func1 = [](int a, int b, int c){
+        return a+b+c;
+    };
+
+    auto func2 = [](int c, float f){
+        return f*c ;
+    };
+
+    auto f1 = d.dispatch(std::bind(func1, _1, _2, 4), 2, 3);
+    auto f2 = d.then(std::move(f1), std::bind(func2, _1, 2.0f));
+
+    d.process_one();
+    d.process_one();
+
+    ASSERT_FLOAT_EQ(18.0f, f2.get());
 }
 
 TEST(dispatcher, then_shared) {
