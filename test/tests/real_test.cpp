@@ -55,8 +55,9 @@ public:
     void init()
     {
         http_request req;
-        _main_dispatcher.when(_http_conn, _http_client.send(_http_conn, req),
-            std::bind(&widget::on_http_response, this, std::placeholders::_1));
+        _main_dispatcher.when(_http_conn,
+            std::bind(&widget::on_http_response, this, std::placeholders::_1),
+            _http_client.send(_http_conn, req));
     }
 
     bool finished() const

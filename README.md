@@ -26,11 +26,12 @@ It has `when` support to concatenate tasks.
 ```c++
 dispatcher d;
 
-auto f = d.when(d.dispatch([](int a, int b){
-    return a+b;
-}, 2, 3), [](int c){
+auto f = d.when([](int c){
+    // will be executed with the result of a+b
     return 2.0f*c ;
-});
+}, d.dispatch([](int a, int b){
+    return a+b;
+}, 2, 3));
 
 // this will call the dispatched lambdas
 d.process_all();
@@ -128,8 +129,9 @@ public:
     void init()
     {
         http_request req("http://eventually.io/test.png");
-        _main_dispatcher.when(_http_conn, _http_client.send(_http_conn, req),
-            std::bind(&widget::on_http_response, this, std::placeholders::_1));
+        _main_dispatcher.when(_http_conn,
+            std::bind(&widget::on_http_response, this, std::placeholders::_1),
+            _http_client.send(_http_conn, req));
     }
 };
 

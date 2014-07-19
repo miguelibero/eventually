@@ -34,11 +34,11 @@ TEST(thread_dispatcher, when_combined) {
 
     thread_dispatcher d;
 
-    auto future = d.when(d.dispatch([](int a, int b){
-        return a+b;
-    }, 2, 3), [](int c){
+    auto future = d.when([](int c){
         return 2.0f*c ;
-    });
+    }, d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3));
 
     ASSERT_FLOAT_EQ(10.0f, future.get());
 }
@@ -66,10 +66,10 @@ TEST(thread_dispatcher, when_combined_scoped_connection) {
     {
         scoped_connection c;
 
-        d.when(c, d.dispatch(c, [](int a, int b){
-            return a+b;
-        }, 2, 3), [](int c){
+        d.when(c, [](int c){
             return 2.0f*c;
-        });
+        }, d.dispatch(c, [](int a, int b){
+            return a+b;
+        }, 2, 3));
     }
 }
