@@ -113,6 +113,23 @@ TEST(dispatcher, when_combined) {
     ASSERT_FLOAT_EQ(10.0f, f.get());
 }
 
+TEST(dispatcher, when_all) {
+
+    dispatcher d;
+
+    auto f = d.when_all([](int a, float b){
+        return a*b;
+    }, d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3), d.dispatch([](float a, float b){
+        return a/b;
+    }, 4.0f, 2.0f));
+
+    d.process_all();
+
+    ASSERT_FLOAT_EQ(10.0f, f.get());
+}
+
 TEST(dispatcher, connection) {
 
     dispatcher d;

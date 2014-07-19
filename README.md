@@ -56,6 +56,25 @@ d.process_one();
 auto result = f.get();
 ```
 
+It has `ẁhen_all` support to wait for a list of tasks.
+
+```c++
+dispatcher d;
+
+auto f = d.when_all([](int a, float b){
+    // will be executed when both tasks are done
+    return a*b;
+}, d.dispatch([](int a, int b){
+    return a+b;
+}, 2, 3), d.dispatch([](float a, float b){
+    return a/b;
+}, 4.0f, 2.0f));
+
+d.process_all();
+// will return 10.0f
+auto result = f.get();
+```
+
 `eventually::thread_dispatcher` processes the tasks in a finite amount of threads
 (by default `std::thread::hardware_concurrency()`).
 
@@ -124,3 +143,9 @@ dispatcher m;
 }
 
 ```
+
+## Acknowledgements
+
+* Herb Sutter for his [concurrency talk](http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism)
+* Anthony Williams for his [C++ Concurrency In Action](http://www.cplusplusconcurrencyinaction.com/) book
+

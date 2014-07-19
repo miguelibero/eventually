@@ -93,6 +93,35 @@ namespace eventually {
             });
         }
 
+        template <class Work, class... Results>
+        auto when_all(Work&& w, std::future<Results>&&... f) noexcept -> std::future<decltype(w(f.get()...))>
+        {
+            return when_all(std::forward<Work>(w), f.share()...);
+        }
+
+        template <class Work, class... Results>
+        auto when_all(Work&& w, std::shared_future<Results>... f) noexcept -> std::future<decltype(w(f.get()...))>
+        {
+            return dispatch([w](std::shared_future<Results>... f) mutable {
+                return w(f.get()...);
+            }, std::shared_future<Results>(f)...);   
+        }
+
+
+        template <class Work, class... Results>
+        auto when_all(connection& c, Work&& w, std::future<Results>&&... f) noexcept -> std::future<decltype(w(f.get()...))>
+        {
+            return when_all(c, std::forward<Work>(w), f.share()...);
+        }
+
+        template <class Work, class... Results>
+        auto when_all(connection& c, Work&& w, std::shared_future<Results>... f) noexcept -> std::future<decltype(w(f.get()...))>
+        {
+            return dispatch(c, [w](std::shared_future<Results>... f) mutable {
+                return w(f.get()...);
+            }, std::shared_future<Results>(f)...);   
+        }
+
         bool process_all() noexcept;
         bool process_one() noexcept;
 
