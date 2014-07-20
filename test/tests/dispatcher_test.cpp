@@ -1,4 +1,4 @@
-#include <eventually/eventually.hpp>
+#include <eventually/dispatcher.hpp>
 #include "gtest/gtest.h"
 
 using namespace eventually;
@@ -128,6 +128,23 @@ TEST(dispatcher, when_all) {
     d.process_all();
 
     ASSERT_FLOAT_EQ(10.0f, f.get());
+}
+
+TEST(dispatcher, when_any) {
+
+    dispatcher d;
+
+    auto f = d.when_any([](int a){
+        return a;
+    }, d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3), d.dispatch([](int a, int b){
+        return a-b;
+    }, 3, 2));
+
+    d.process_all();
+
+    ASSERT_EQ(1, f.get());
 }
 
 TEST(dispatcher, connection) {

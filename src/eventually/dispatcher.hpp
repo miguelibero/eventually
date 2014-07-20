@@ -4,7 +4,7 @@
 
 #include <eventually/task.hpp>
 #include <eventually/connection.hpp>
-#include <functional>
+#include <eventually/worker.hpp>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -74,8 +74,8 @@ namespace eventually {
         template <class Work, class Result>
         auto when(Work&& w, std::shared_future<Result> f) noexcept -> std::future<decltype(w(f.get()))>
         {
-            return dispatch([f, w]() mutable {
-                return get_work_done(f, w);
+            return dispatch([w, f]() mutable {
+                return worker::get_work_done(w, f);
             });
         }
 
@@ -88,8 +88,8 @@ namespace eventually {
         template <class Work, class Result>
         auto when(connection& c, Work&& w, std::shared_future<Result> f) noexcept -> std::future<decltype(w(f.get()))>
         {
-            return dispatch(c, [f, w]() mutable {
-                return get_work_done(f, w);
+            return dispatch(c, [w, f]() mutable {
+                return worker::get_work_done(w, f);
             });
         }
 
@@ -103,10 +103,9 @@ namespace eventually {
         auto when_all(Work&& w, std::shared_future<Results>... f) noexcept -> std::future<decltype(w(f.get()...))>
         {
             return dispatch([w](std::shared_future<Results>... f) mutable {
-                return w(f.get()...);
+                return worker::get_work_done(w, f...);
             }, std::shared_future<Results>(f)...);   
         }
-
 
         template <class Work, class... Results>
         auto when_all(connection& c, Work&& w, std::future<Results>&&... f) noexcept -> std::future<decltype(w(f.get()...))>
@@ -118,8 +117,37 @@ namespace eventually {
         auto when_all(connection& c, Work&& w, std::shared_future<Results>... f) noexcept -> std::future<decltype(w(f.get()...))>
         {
             return dispatch(c, [w](std::shared_future<Results>... f) mutable {
-                return w(f.get()...);
-            }, std::shared_future<Results>(f)...);   
+                return worker::get_work_done(w, f...);
+            }, std::shared_future<Results>(f)...);
+        }
+
+        template <class Work, class Result, class... Results>
+        auto when_any(Work&& w, std::future<Result>&& f, std::future<Results>&&... fs) noexcept -> std::future<decltype(w(f.get()))>
+        {
+            return when_any(std::forward<Work>(w), f.share(), fs.share()...);
+        }
+
+        template <class Work, class Result, class... Results>
+        auto when_any(Work&& w, std::shared_future<Result> f, std::shared_future<Results>... fs) noexcept -> std::future<decltype(w(f.get()))>
+        {
+            shared_worker<decltype(w(f.get()))> p;
+            when_any(std::forward<Work>(w), p, f, fs...);
+            return p.get_future();
+        }
+
+        template <class Work, class FinalResult, class Result, class... Results>
+        void when_any(Work&& w, shared_worker<FinalResult> p, std::shared_future<Result> f, std::shared_future<Results>... fs) noexcept
+        {
+            when_any(std::forward<Work>(w), p, fs...);
+            when_any(std::forward<Work>(w), p, f);
+        }
+
+        template <class Work, class FinalResult, class Result>
+        void when_any(Work&& w, shared_worker<FinalResult> p, std::shared_future<Result> f) noexcept
+        {
+            dispatch([w, p, f]() mutable {
+                return p.get_work_done(w, f);
+            });
         }
 
         bool process_all() noexcept;

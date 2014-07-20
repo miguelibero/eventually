@@ -4,20 +4,9 @@
 
 #include <functional>
 #include <eventually/apply.hpp>
+#include <eventually/template_helper.hpp>
 
 namespace eventually {
-
-    namespace handler_helper
-    {
-        template <std::size_t... Ts>
-        struct index {};
-        
-        template <std::size_t N, std::size_t... Ts>
-        struct gen_seq : gen_seq<N - 1, N - 1, Ts...> {};
-        
-        template <std::size_t... Ts>
-        struct gen_seq<0, Ts...> : index<Ts...> {};
-    }
 
     /**
      * Contains a function object and its parameters
