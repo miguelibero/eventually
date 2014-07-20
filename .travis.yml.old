@@ -1,8 +1,0 @@
-language: cpp
-compiler:
-  - gcc
-  - clang
-script: cmake . && make && ./bin/runUnitTests
-os:
-  - linux
-  - osx
