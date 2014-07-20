@@ -1,5 +1,5 @@
 
-#include <eventually/eventually.hpp>
+#include <eventually/handler.hpp>
 #include <functional>
 #include "gtest/gtest.h"
 

@@ -76,6 +76,26 @@ d.process_all();
 auto result = f.get();
 ```
 
+It has `ẁhen_any` support to wait for the first task that finishes from a list.
+
+```c++
+dispatcher d;
+
+auto f = d.when_any([](int a){
+    return a;
+}, d.dispatch([](int a, int b){
+    return a+b;
+}, 2, 3), d.dispatch([](int a, int b){
+    return a-b;
+}, 3, 2));
+
+d.process_all();
+
+d.process_all();
+// will return 1
+auto result = f.get();
+```
+
 `eventually::thread_dispatcher` processes the tasks in a finite amount of threads
 (by default `std::thread::hardware_concurrency()`).
 
