@@ -30,7 +30,7 @@ namespace eventually {
     private:
         typedef handler<Result, Args...> internal_handler;
         typedef std::packaged_task<Result()> internal_task;
-        connection _connection;        
+        connection _connection;
         internal_handler _handler;
         internal_task _task;
 
@@ -50,7 +50,7 @@ namespace eventually {
         _task([this](){ return get_work_done(); })
         {
         }
-         
+
         std::future<Result> get_future()
         {
             return _task.get_future();
@@ -70,7 +70,7 @@ namespace eventually {
         {
             return _connection.get_work_done(_handler);
         }
-         
+
         void operator()()
         {
             _task();
@@ -85,12 +85,12 @@ namespace eventually {
         {
             _task.swap(other._task);
         }
-         
+
         void make_ready_at_thread_exit()
         {
             _task.make_ready_at_thread_exit();
         }
-         
+
         void reset()
         {
             _task.reset();
@@ -113,7 +113,7 @@ namespace eventually {
         return std::unique_ptr<task<decltype(w(args...)), Args...>>(
                 new task<decltype(w(args...)), Args...>(c, std::forward<Work>(w), std::forward<Args>(args)...));
     }
-    
+
 }
 
 #endif
