@@ -2,16 +2,18 @@
 #ifndef _eventually_handler_hpp_
 #define _eventually_handler_hpp_
 
-#include <functional>
 #include <eventually/apply.hpp>
 #include <eventually/template_helper.hpp>
+#include <eventually/is_callable.hpp>
+
+#include <functional>
 
 namespace eventually {
 
     /**
      * Contains a function object and its parameters
      */
-    template <class Result, class... Args>
+    template <typename Result, typename... Args>
     class handler
     {
     private:
@@ -20,7 +22,7 @@ namespace eventually {
 
     public:
 
-        template <class Work>
+        template <typename Work, typename std::enable_if<is_callable_with_result<Work(Args...), Result>::value, int>::type = 0>
         handler(Work&& w, Args&&... args)
             : _work(std::forward<Work>(w)),
               _args(std::forward<Args>(args)...)
