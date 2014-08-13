@@ -22,8 +22,10 @@ namespace eventually {
         duration _wait;
         std::vector<std::thread> _threads;
         std::atomic_bool _done;
+        std::mutex _wait_mutex;
 
         void worker_thread(size_t i);
+
     public:
         thread_dispatcher(const duration& wait=duration::zero(), size_t thread_count=std::thread::hardware_concurrency());
         ~thread_dispatcher();

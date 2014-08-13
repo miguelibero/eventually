@@ -24,7 +24,11 @@ namespace eventually {
 
     thread_dispatcher::~thread_dispatcher()
     {
-        _done = true;
+        {
+            std::unique_lock<std::mutex> lock_(_wait_mutex);
+            _done = true;
+            _new_task.notify_all();
+        }
         for(auto& thread_ : _threads)
         {
             thread_.join();
@@ -35,14 +39,21 @@ namespace eventually {
     {
         while(!_done)
         {
-            process_one();
-            if(_wait == duration::zero())
+            while(process_one())
             {
-                std::this_thread::yield();
+                if(_wait == duration::zero())
+                {
+                    std::this_thread::yield();
+                }
+                else
+                {
+                    std::this_thread::sleep_for(_wait);
+                }
             }
-            else
+            std::unique_lock<std::mutex> lock_(_wait_mutex);
+            if(!_done)
             {
-                std::this_thread::sleep_for(_wait);
+                _new_task.wait(lock_);
             }
         }
     }
