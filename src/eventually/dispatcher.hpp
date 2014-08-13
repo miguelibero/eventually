@@ -6,7 +6,7 @@
 #include <eventually/connection.hpp>
 #include <eventually/worker.hpp>
 #include <eventually/is_callable.hpp>
-#include <eventually/is_any.hpp>
+#include <eventually/is_same.hpp>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -147,14 +147,14 @@ namespace eventually {
         }
 
         template <typename Work, typename Result, typename... Results,
-            typename std::enable_if<is_any<Result, Results...>::value, int>::type = 0, typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0, typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
         auto when_any(Work&& w, std::future<Result>&& f, std::future<Results>&&... fs) noexcept -> std::future<decltype(w(f.get()))>
         {
             return when_any(std::forward<Work>(w), f.share(), fs.share()...);
         }
 
         template <typename Work, typename Result, typename... Results,
-            typename std::enable_if<is_any<Result, Results...>::value, int>::type = 0, typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0, typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
         auto when_any(Work&& w, std::shared_future<Result> f, std::shared_future<Results>... fs) noexcept -> std::future<decltype(w(f.get()))>
         {
             shared_worker<decltype(w(f.get()))> p;
@@ -163,7 +163,7 @@ namespace eventually {
         }
 
         template <typename Work, typename FinalResult, typename Result, typename... Results,
-            typename std::enable_if<is_any<Result, Results...>::value, int>::type = 0, typename std::enable_if<is_callable_with_result<Work(Result), FinalResult>::value, int>::type = 0>
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0, typename std::enable_if<is_callable_with_result<Work(Result), FinalResult>::value, int>::type = 0>
         void when_any(Work&& w, shared_worker<FinalResult> p, std::shared_future<Result> f, std::shared_future<Results>... fs) noexcept
         {
             when_any(std::forward<Work>(w), p, fs...);
