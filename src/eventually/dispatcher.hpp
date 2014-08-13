@@ -24,25 +24,34 @@ namespace eventually {
         std::mutex _mutex;
         std::deque<basic_task_ptr> _tasks;
 
+    protected:
+        std::condition_variable _new_task;
+
     public:
+
+        virtual ~dispatcher();
 
         template<typename Work, typename... Args, typename std::enable_if<is_callable<Work(Args...)>::value, int>::type = 0>
         auto dispatch(Work&& w, Args&&... args) noexcept ->  std::future<decltype(w(args...))>
         {
-            auto task_ = make_task_ptr(std::forward<Work>(w), std::forward<Args>(args)...);
-            auto future_ = task_->get_future();
-            std::lock_guard<std::mutex> lock_(_mutex);
-            _tasks.push_back(std::move(task_));
-            return future_;
+            return dispatch(make_task_ptr(std::forward<Work>(w), std::forward<Args>(args)...));
         }
 
         template<typename Work, typename... Args, typename std::enable_if<is_callable<Work(Args...)>::value, int>::type = 0>
         auto dispatch(connection& c, Work&& w, Args&&... args) noexcept ->  std::future<decltype(w(args...))>
         {
-            auto task_ = make_task_ptr(c, std::forward<Work>(w), std::forward<Args>(args)...);
-            auto future_ = task_->get_future();
-            std::lock_guard<std::mutex> lock_(_mutex);
-            _tasks.push_back(std::move(task_));
+            return dispatch(make_task_ptr(c, std::forward<Work>(w), std::forward<Args>(args)...));
+        }
+
+        template<typename Result, typename... Args>
+        auto dispatch(std::unique_ptr<task<Result, Args...>> t) noexcept ->  std::future<Result>
+        {
+            auto future_ = t->get_future();
+            {
+                std::lock_guard<std::mutex> lock_(_mutex);
+                _tasks.push_back(std::move(t));
+            }
+            _new_task.notify_one();
             return future_;
         }
 

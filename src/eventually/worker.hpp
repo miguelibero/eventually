@@ -14,10 +14,15 @@ namespace eventually {
     {
         std::promise<FinalResult> promise;
         std::atomic_flag flag;
+
+        shared_worker_data():
+        flag(ATOMIC_FLAG_INIT)
+        {
+        }
     };
 
     /**
-     * Used to share a promise between all the futures 
+     * Used to share a promise between all the futures
      * when calling dispatcher::when_any
      */
     template<class FinalResult>

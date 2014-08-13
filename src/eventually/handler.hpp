@@ -5,7 +5,6 @@
 #include <eventually/apply.hpp>
 #include <eventually/template_helper.hpp>
 #include <eventually/is_callable.hpp>
-
 #include <functional>
 
 namespace eventually {

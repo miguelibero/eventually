@@ -3,6 +3,10 @@
 
 namespace eventually {
 
+    dispatcher::~dispatcher()
+    {
+    }
+
     bool dispatcher::process_all() noexcept
     {
         bool result_ = false;
@@ -29,6 +33,5 @@ namespace eventually {
         (*task_)();
         return true;
     }
-
 
 }
