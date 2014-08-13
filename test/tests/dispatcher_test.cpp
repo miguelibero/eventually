@@ -130,6 +130,24 @@ TEST(dispatcher, when_all) {
     ASSERT_FLOAT_EQ(10.0f, f.get());
 }
 
+TEST(dispatcher, when_all_tuple) {
+
+    dispatcher d;
+
+    auto f = d.when_all(d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3), d.dispatch([](float a, float b){
+        return a/b;
+    }, 4.0f, 2.0f));
+
+    d.process_all();
+
+    auto t = f.get();
+
+    ASSERT_EQ(5, std::get<0>(t));
+    ASSERT_FLOAT_EQ(2.0f, std::get<1>(t));
+}
+
 TEST(dispatcher, when_any) {
 
     dispatcher d;

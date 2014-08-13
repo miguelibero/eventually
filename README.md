@@ -57,7 +57,7 @@ d.process_one();
 auto result = f.get();
 ```
 
-It has `ẁhen_all` support to wait for a list of tasks.
+It has `when_all` support to wait for a list of tasks.
 
 ```c++
 dispatcher d;
@@ -73,6 +73,22 @@ auto f = d.when_all([](int a, float b){
 
 d.process_all();
 // will return 10.0f
+auto result = f.get();
+```
+
+`when_all` also works without callback returning a `std::tuple`.
+
+```c++
+dispatcher d;
+
+auto f = d.when_all(d.dispatch([](int a, int b){
+    return a+b;
+}, 2, 3), d.dispatch([](float a, float b){
+    return a/b;
+}, 4.0f, 2.0f));
+
+d.process_all();
+// will return a tuple of (5, 2.0f)
 auto result = f.get();
 ```
 
@@ -170,4 +186,3 @@ dispatcher m;
 
 * Herb Sutter for his [concurrency talk](http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism)
 * Anthony Williams for his [C++ Concurrency In Action](http://www.cplusplusconcurrencyinaction.com/) book
-
