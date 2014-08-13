@@ -1,6 +1,5 @@
 
 #include <eventually/thread_dispatcher.hpp>
-#include <iostream>
 
 namespace eventually {
 
