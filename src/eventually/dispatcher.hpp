@@ -109,6 +109,34 @@ namespace eventually {
             }, std::shared_future<Results>(f)...);
         }
 
+        template <typename... Results>
+        auto when_all(std::future<Results>&&... f) noexcept -> std::future<std::tuple<Results...>>
+        {
+            return when_all(f.share()...);
+        }
+
+        template <typename... Results>
+        auto when_all(std::shared_future<Results>... f) noexcept -> std::future<std::tuple<Results...>>
+        {
+            return when_all([](Results... rs){
+                return std::tuple<Results...>(rs...);
+            }, f...);
+        }
+
+        template <typename... Results>
+        auto when_all(connection& c, std::future<Results>&&... f) noexcept -> std::future<std::tuple<Results...>>
+        {
+            return when_all(c, f.share()...);
+        }
+
+        template <typename... Results>
+        auto when_all(connection& c, std::shared_future<Results>... f) noexcept -> std::future<std::tuple<Results...>>
+        {
+            return when_all(c, [](Results... rs){
+                return std::tuple<Results...>(rs...);
+            }, f...);
+        }
+
         template <typename Work, typename Result, typename... Results,
             typename std::enable_if<is_any<Result, Results...>::value, int>::type = 0, typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
         auto when_any(Work&& w, std::future<Result>&& f, std::future<Results>&&... fs) noexcept -> std::future<decltype(w(f.get()))>
