@@ -28,7 +28,7 @@ namespace eventually {
         {
         }
 
-        Result operator()()
+        Result operator()() const
         {
             return apply(_work, _args);
         }

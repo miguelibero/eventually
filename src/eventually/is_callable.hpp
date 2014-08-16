@@ -75,6 +75,7 @@ namespace eventually {
         struct is_callable_impl<Expr, 5>
         : std::false_type
         {};
+
     }
 
     template <typename Expr>
@@ -82,11 +83,20 @@ namespace eventually {
     : detail::is_callable_impl<Expr>
     {};
 
+    template<typename Expr>
+    class result_of;
+
+    template<typename F, typename... Args>
+    struct result_of<F(Args...)>
+    {
+      typedef decltype(std::declval<F>()(std::declval<Args>()...)) type;
+    };
+
     template <typename Expr, typename Result>
     struct is_callable_with_result
-    : std::is_same<typename std::result_of<Expr>::type, Result>
+    : std::is_same<typename result_of<Expr>::type, Result>
     {};
-
+ 
 }
 
 #endif
