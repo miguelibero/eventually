@@ -58,8 +58,8 @@ namespace eventually {
         /**
          * Call a function when a future is ready.
          * Can be used to concatenate tasks.
-         * @param future to wait for
          * @param work function that accepts the future result as a parameter
+         * @param future to wait for         
          * @result future for this task
          */
         template <typename Work, typename Result, typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
@@ -90,6 +90,47 @@ namespace eventually {
             });
         }
 
+        /**
+         * Call a function when a future throws an exception
+         * Can be used to react to asyncronous exception
+         * @param work function that accepts the exception as a parameter         
+         * @param future to wait for
+         * @result future for this task
+         */
+        template <typename Work, typename Result, typename std::enable_if<is_callable_with_result<Work(const std::exception&), Result>::value, int>::type = 0>
+        auto when_throw(Work&& w, std::future<Result>&& f) noexcept -> std::future<Result>
+        {
+            return when_throw(std::forward<Work>(w), f.share());
+        }
+
+        template <typename Work, typename Result, typename std::enable_if<is_callable_with_result<Work(const std::exception&), Result>::value, int>::type = 0>
+        auto when_throw(Work&& w, std::shared_future<Result> f) noexcept -> std::future<Result>
+        {
+            return dispatch([w, f]() mutable {
+                return worker::try_to_work(w, f);
+            });
+        }
+
+        template <typename Work, typename Result, typename std::enable_if<is_callable_with_result<Work(const std::exception&), Result>::value, int>::type = 0>
+        auto when_throw(connection& c, Work&& w, std::future<Result>&& f) noexcept -> std::future<Result>
+        {
+            return when_throw(c, std::forward<Work>(w), f.share());
+        }
+
+        template <typename Work, typename Result, typename std::enable_if<is_callable_with_result<Work(const std::exception&), Result>::value, int>::type = 0>
+        auto when_throw(connection& c, Work&& w, std::shared_future<Result> f) noexcept -> std::future<Result>
+        {
+            return dispatch(c, [w, f]() mutable {
+                return worker::try_to_work(w, f);
+            });
+        }
+
+        /**
+         * Call a function when a a list of futures are met
+         * @param work function that accepts results as parameters         
+         * @param futures to wait for
+         * @result future for this task
+         */
         template <typename Work, typename... Results, typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
         auto when_all(Work&& w, std::future<Results>&&... f) noexcept -> std::future<decltype(w(f.get()...))>
         {
@@ -146,6 +187,13 @@ namespace eventually {
             }, f...);
         }
 
+        /**
+         * Call a function when a the first future of a list is met
+         * Only works with a list of futures of the same type
+         * @param work function that accepts a result as parameter
+         * @param futures to wait for
+         * @result future for this task
+         */
         template <typename Work, typename Result, typename... Results,
             typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0, typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
         auto when_any(Work&& w, std::future<Result>&& f, std::future<Results>&&... fs) noexcept -> std::future<decltype(w(f.get()))>

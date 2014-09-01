@@ -113,6 +113,46 @@ TEST(dispatcher, when_combined) {
     ASSERT_FLOAT_EQ(10.0f, f.get());
 }
 
+TEST(dispatcher, when_throw) {
+
+    dispatcher d;
+
+    auto f = d.when([](int c){
+        return 2.0f*c ;
+    }, d.when_throw([](const std::exception& e){
+        return 2;
+    }, d.dispatch([](){
+        throw std::exception();
+        return 0;
+    })));
+
+    d.process_one();
+    d.process_one();
+    d.process_one();
+    
+    ASSERT_FLOAT_EQ(4.0f, f.get());
+}
+
+TEST(dispatcher, when_throw_no_exception) {
+
+    dispatcher d;
+
+    auto f = d.when([](int c){
+        return 2.0f*c ;
+    }, d.when_throw([](const std::exception& e){
+        return 2;
+    }, d.dispatch([](){
+        return 3;
+    })));
+
+    d.process_one();
+    d.process_one();
+    d.process_one();
+    
+    ASSERT_FLOAT_EQ(6.0f, f.get());
+}
+
+
 TEST(dispatcher, when_all) {
 
     dispatcher d;

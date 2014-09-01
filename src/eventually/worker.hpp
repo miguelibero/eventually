@@ -6,6 +6,7 @@
 #include <atomic>
 #include <tuple>
 #include <eventually/apply.hpp>
+#include <eventually/is_callable.hpp>
 
 namespace eventually {
 
@@ -78,17 +79,43 @@ namespace eventually {
     class worker
     {
     public:
-        template <typename Work, typename... Results>
+        template <typename Work, typename... Results, typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
         static auto get_work_done(Work& w, std::shared_future<Results>&... fs) -> decltype(w(fs.get()...))
         {
             return w(fs.get()...);
         }
 
-        template <typename Work>
-        static auto get_work_done(std::shared_future<void>& f, Work& w) -> decltype(w())
+        template <typename Work, typename std::enable_if<is_callable<Work()>::value, int>::type = 0>
+        static auto get_work_done(Work& w, std::shared_future<void>& f) -> decltype(w())
         {
             f.wait();
             return w();
+        }
+
+        template <typename Work, typename Result, typename std::enable_if<is_callable_with_result<Work(const std::exception&), Result>::value, int>::type = 0>
+        static auto try_to_work(Work& w, std::shared_future<Result>& f) -> Result
+        {
+            try
+            {
+                return f.get();
+            }
+            catch(const std::exception& e)
+            {
+                return w(e);
+            }
+        }
+
+        template <typename Work, typename std::enable_if<is_callable<Work(const std::exception&)>::value, int>::type = 0>
+        static auto try_to_work(Work& w, std::shared_future<void>& f) -> void
+        {
+            try
+            {
+                f.wait();
+            }
+            catch(const std::exception& e)
+            {
+                w(e);
+            }
         }
     };
 
