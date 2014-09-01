@@ -57,6 +57,25 @@ d.process_one();
 auto result = f.get();
 ```
 
+It has `when_throw` support to capture interruptions in tasks.
+
+```c++
+dispatcher d;
+
+auto f = d.when_throw([](const std::exception& e){
+    return 1;
+}, d.dispatch([](int a, int b){
+    throw std::exception();
+    return a+b;
+}, 2, 3));
+
+d.process_one();
+d.process_one();
+
+// would return 1
+auto result = f.get();
+```
+
 It has `when_all` support to wait for a list of tasks.
 
 ```c++

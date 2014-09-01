@@ -97,13 +97,13 @@ namespace eventually {
          * @param future to wait for
          * @result future for this task
          */
-        template <typename Work, typename Result, typename std::enable_if<is_callable_with_result<Work(const std::exception&), Result>::value, int>::type = 0>
+        template <typename Work, typename Result, typename Exception = std::exception, typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
         auto when_throw(Work&& w, std::future<Result>&& f) noexcept -> std::future<Result>
         {
             return when_throw(std::forward<Work>(w), f.share());
         }
 
-        template <typename Work, typename Result, typename std::enable_if<is_callable_with_result<Work(const std::exception&), Result>::value, int>::type = 0>
+        template <typename Work, typename Result, typename Exception = std::exception, typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
         auto when_throw(Work&& w, std::shared_future<Result> f) noexcept -> std::future<Result>
         {
             return dispatch([w, f]() mutable {
@@ -111,13 +111,13 @@ namespace eventually {
             });
         }
 
-        template <typename Work, typename Result, typename std::enable_if<is_callable_with_result<Work(const std::exception&), Result>::value, int>::type = 0>
+        template <typename Work, typename Result, typename Exception = std::exception, typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
         auto when_throw(connection& c, Work&& w, std::future<Result>&& f) noexcept -> std::future<Result>
         {
             return when_throw(c, std::forward<Work>(w), f.share());
         }
 
-        template <typename Work, typename Result, typename std::enable_if<is_callable_with_result<Work(const std::exception&), Result>::value, int>::type = 0>
+        template <typename Work, typename Result, typename Exception = std::exception, typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
         auto when_throw(connection& c, Work&& w, std::shared_future<Result> f) noexcept -> std::future<Result>
         {
             return dispatch(c, [w, f]() mutable {

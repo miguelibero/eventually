@@ -92,27 +92,27 @@ namespace eventually {
             return w();
         }
 
-        template <typename Work, typename Result, typename std::enable_if<is_callable_with_result<Work(const std::exception&), Result>::value, int>::type = 0>
+        template <typename Work, typename Result, typename Exception = std::exception, typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
         static auto try_to_work(Work& w, std::shared_future<Result>& f) -> Result
         {
             try
             {
                 return f.get();
             }
-            catch(const std::exception& e)
+            catch(const Exception& e)
             {
                 return w(e);
             }
         }
 
-        template <typename Work, typename std::enable_if<is_callable<Work(const std::exception&)>::value, int>::type = 0>
+        template <typename Work, typename Exception = std::exception, typename std::enable_if<is_callable<Work(const Exception&)>::value, int>::type = 0>
         static auto try_to_work(Work& w, std::shared_future<void>& f) -> void
         {
             try
             {
                 f.wait();
             }
-            catch(const std::exception& e)
+            catch(const Exception& e)
             {
                 w(e);
             }
