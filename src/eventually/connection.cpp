@@ -20,7 +20,6 @@ namespace eventually {
     void connection::interrupt() noexcept
     {
         _data->interrupt_flag = true;
-        std::lock_guard<std::mutex> lock_(_data->_mutex);
     }
 
     void connection::interruption_point()

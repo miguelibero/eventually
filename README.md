@@ -111,7 +111,7 @@ d.process_all();
 auto result = f.get();
 ```
 
-It has `ẁhen_any` support to wait for the first task that finishes from a list.
+It has `when_any` support to wait for the first task that finishes from a list.
 
 ```c++
 dispatcher d;
@@ -125,9 +125,29 @@ auto f = d.when_any([](int a){
 }, 3, 2));
 
 d.process_all();
+// will return 1
+auto result = f.get();
+```
+
+It has `when_every` support to to call a callback on every task of a list.
+
+```c++
+dispatcher d;
+
+auto f = d.when_every([](std::vector<int>& a){
+    // called with {1} and then with {1, 5}
+    for(auto& i : a)
+    {
+        i += 1;
+    }
+}, d.dispatch([](int a, int b){
+    return a+b;
+}, 2, 3), d.dispatch([](int a, int b){
+    return a-b;
+}, 3, 2));
 
 d.process_all();
-// will return 1
+// will return a vector with {3, 6}
 auto result = f.get();
 ```
 

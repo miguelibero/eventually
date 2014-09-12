@@ -152,7 +152,6 @@ TEST(dispatcher, when_throw_no_exception) {
     ASSERT_FLOAT_EQ(6.0f, f.get());
 }
 
-
 TEST(dispatcher, when_all) {
 
     dispatcher d;
@@ -169,6 +168,36 @@ TEST(dispatcher, when_all) {
 
     ASSERT_FLOAT_EQ(10.0f, f.get());
 }
+
+TEST(dispatcher, when_all_cancel) {
+
+    dispatcher d;
+    connection c;
+
+    auto f = d.when_all(c, [](int a, float b){
+        return a*b;
+    }, d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3), d.dispatch([](float a, float b){
+        return a/b;
+    }, 4.0f, 2.0f));
+
+    c.interrupt();
+    d.process_all();
+
+    bool threw = false;
+    try
+    {
+        f.get();
+    }
+    catch(const connection_interrupted&)
+    {
+        threw = true;
+    }
+
+    ASSERT_TRUE(threw);
+}
+
 
 TEST(dispatcher, when_all_tuple) {
 
@@ -204,6 +233,118 @@ TEST(dispatcher, when_any) {
 
     ASSERT_EQ(1, f.get());
 }
+
+/*
+TEST(dispatcher, when_any_void) {
+
+    dispatcher d;
+    bool called = false;
+    auto f = d.when_any([&called](){
+        called = true;
+    }, d.dispatch([](){}), d.dispatch([](){}));
+
+    d.process_all();
+
+    ASSERT_TRUE(called);
+}
+*/
+
+TEST(dispatcher, when_any_cancel) {
+
+    dispatcher d;
+    connection c;
+
+    auto f = d.when_any(c, [](int a){
+        return a;
+    }, d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3), d.dispatch([](int a, int b){
+        return a-b;
+    }, 3, 2));
+
+    c.interrupt();
+
+    d.process_all();
+
+    bool threw = false;
+    try
+    {
+        f.get();
+    }
+    catch(const connection_interrupted&)
+    {
+        threw = true;
+    }
+
+    ASSERT_TRUE(threw);
+}
+
+TEST(dispatcher, when_every) {
+
+    dispatcher d;
+
+    std::vector<int> b;
+    auto f = d.when_every([&b](std::vector<int>& a){
+        b.insert(b.end(), a.begin(), a.end());
+        for(auto& i : a)
+        {
+            i += 1;
+        }
+    }, d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3), d.dispatch([](int a, int b){
+        return a-b;
+    }, 3, 2));
+
+    d.process_all();
+    auto c = f.get();
+
+    ASSERT_EQ(3, b.size());
+    ASSERT_EQ(1, b[0]);    
+    ASSERT_EQ(2, b[1]);
+    ASSERT_EQ(5, b[2]);
+    ASSERT_EQ(2, c.size());
+    ASSERT_EQ(3, c[0]);    
+    ASSERT_EQ(6, c[1]);
+}
+
+TEST(dispatcher, when_every_vector) {
+
+    dispatcher d;
+
+    auto f = d.when_every(d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3), d.dispatch([](int a, int b){
+        return a-b;
+    }, 3, 2));
+
+    d.process_all();
+    auto t = f.get();
+
+    ASSERT_EQ(2, t.size());
+    ASSERT_EQ(1, t[0]);    
+    ASSERT_EQ(5, t[1]);
+}
+
+TEST(dispatcher, when_every_cancel) {
+
+    dispatcher d;
+    connection c;
+
+    auto f = d.when_every(c, [](const std::vector<int>& a){
+    }, d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3), d.dispatch([](int a, int b){
+        return a-b;
+    }, 3, 2));
+
+    c.interrupt();
+    d.process_all();    
+    auto t = f.get();
+
+    ASSERT_EQ(0, t.size());
+}
+
 
 TEST(dispatcher, connection) {
 
