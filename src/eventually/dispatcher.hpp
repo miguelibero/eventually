@@ -286,6 +286,14 @@ namespace eventually {
             });
         }
 
+        template <typename Result, typename... Results,
+            typename Container = std::vector<Result>,
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0>
+        auto when_every(std::future<Result>&& f, std::future<Results>&&... fs) noexcept -> std::future<Container>
+        {
+            return when_every([](const Container&){}, f.share(), fs.share()...);
+        }
+
         bool process_all() noexcept;
         bool process_one() noexcept;
 

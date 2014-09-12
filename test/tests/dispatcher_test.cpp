@@ -209,8 +209,13 @@ TEST(dispatcher, when_every) {
 
     dispatcher d;
 
-    auto f = d.when_every([](const std::vector<int>& a){
-        return std::vector<int>(a);
+    std::vector<int> b;
+    auto f = d.when_every([&b](std::vector<int>& a){
+        b.insert(b.end(), a.begin(), a.end());
+        for(auto& i : a)
+        {
+            i += 1;
+        }
     }, d.dispatch([](int a, int b){
         return a+b;
     }, 2, 3), d.dispatch([](int a, int b){
@@ -218,12 +223,35 @@ TEST(dispatcher, when_every) {
     }, 3, 2));
 
     d.process_all();
-    auto v = f.get();
+    auto c = f.get();
 
-    ASSERT_EQ(2, v.size());
-    ASSERT_EQ(1, v[0]);    
-    ASSERT_EQ(5, v[1]);
+    ASSERT_EQ(3, b.size());
+    ASSERT_EQ(1, b[0]);    
+    ASSERT_EQ(2, b[1]);
+    ASSERT_EQ(5, b[2]);
+    ASSERT_EQ(2, c.size());
+    ASSERT_EQ(3, c[0]);    
+    ASSERT_EQ(6, c[1]);
 }
+
+TEST(dispatcher, when_every_vector) {
+
+    dispatcher d;
+
+    auto f = d.when_every(d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3), d.dispatch([](int a, int b){
+        return a-b;
+    }, 3, 2));
+
+    d.process_all();
+    auto t = f.get();
+
+    ASSERT_EQ(2, t.size());
+    ASSERT_EQ(1, t[0]);    
+    ASSERT_EQ(5, t[1]);
+}
+
 
 TEST(dispatcher, connection) {
 
