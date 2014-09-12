@@ -205,6 +205,26 @@ TEST(dispatcher, when_any) {
     ASSERT_EQ(1, f.get());
 }
 
+TEST(dispatcher, when_every) {
+
+    dispatcher d;
+
+    auto f = d.when_every([](const std::vector<int>& a){
+        return std::vector<int>(a);
+    }, d.dispatch([](int a, int b){
+        return a+b;
+    }, 2, 3), d.dispatch([](int a, int b){
+        return a-b;
+    }, 3, 2));
+
+    d.process_all();
+    auto v = f.get();
+
+    ASSERT_EQ(2, v.size());
+    ASSERT_EQ(1, v[0]);    
+    ASSERT_EQ(5, v[1]);
+}
+
 TEST(dispatcher, connection) {
 
     dispatcher d;

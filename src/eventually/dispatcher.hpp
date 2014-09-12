@@ -10,6 +10,7 @@
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 namespace eventually {
 
@@ -72,7 +73,7 @@ namespace eventually {
         auto when(Work&& w, std::shared_future<Result> f) noexcept -> std::future<decltype(w(f.get()))>
         {
             return dispatch([w, f]() mutable {
-                return worker::get_work_done(w, f);
+                return when_worker::work(w, f);
             });
         }
 
@@ -86,7 +87,7 @@ namespace eventually {
         auto when(connection& c, Work&& w, std::shared_future<Result> f) noexcept -> std::future<decltype(w(f.get()))>
         {
             return dispatch(c, [w, f]() mutable {
-                return worker::get_work_done(w, f);
+                return when_worker::work(w, f);
             });
         }
 
@@ -97,31 +98,35 @@ namespace eventually {
          * @param future to wait for
          * @result future for this task
          */
-        template <typename Work, typename Result, typename Exception = std::exception, typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
+        template <typename Work, typename Result, typename Exception = std::exception,
+            typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
         auto when_throw(Work&& w, std::future<Result>&& f) noexcept -> std::future<Result>
         {
             return when_throw(std::forward<Work>(w), f.share());
         }
 
-        template <typename Work, typename Result, typename Exception = std::exception, typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
+        template <typename Work, typename Result, typename Exception = std::exception,
+            typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
         auto when_throw(Work&& w, std::shared_future<Result> f) noexcept -> std::future<Result>
         {
             return dispatch([w, f]() mutable {
-                return worker::try_to_work(w, f);
+                return when_throw_worker::work(w, f);
             });
         }
 
-        template <typename Work, typename Result, typename Exception = std::exception, typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
+        template <typename Work, typename Result, typename Exception = std::exception,
+            typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
         auto when_throw(connection& c, Work&& w, std::future<Result>&& f) noexcept -> std::future<Result>
         {
             return when_throw(c, std::forward<Work>(w), f.share());
         }
 
-        template <typename Work, typename Result, typename Exception = std::exception, typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
+        template <typename Work, typename Result, typename Exception = std::exception,
+            typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
         auto when_throw(connection& c, Work&& w, std::shared_future<Result> f) noexcept -> std::future<Result>
         {
             return dispatch(c, [w, f]() mutable {
-                return worker::try_to_work(w, f);
+                return when_throw_worker::work(w, f);
             });
         }
 
@@ -131,31 +136,35 @@ namespace eventually {
          * @param futures to wait for
          * @result future for this task
          */
-        template <typename Work, typename... Results, typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
+        template <typename Work, typename... Results,
+            typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
         auto when_all(Work&& w, std::future<Results>&&... f) noexcept -> std::future<decltype(w(f.get()...))>
         {
             return when_all(std::forward<Work>(w), f.share()...);
         }
 
-        template <typename Work, typename... Results, typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
+        template <typename Work, typename... Results,
+            typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
         auto when_all(Work&& w, std::shared_future<Results>... f) noexcept -> std::future<decltype(w(f.get()...))>
         {
             return dispatch([w](std::shared_future<Results>... f) mutable {
-                return worker::get_work_done(w, f...);
+                return when_worker::work(w, f...);
             }, std::shared_future<Results>(f)...);
         }
 
-        template <typename Work, typename... Results, typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
+        template <typename Work, typename... Results,
+            typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
         auto when_all(connection& c, Work&& w, std::future<Results>&&... f) noexcept -> std::future<decltype(w(f.get()...))>
         {
             return when_all(c, std::forward<Work>(w), f.share()...);
         }
 
-        template <typename Work, typename... Results, typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
+        template <typename Work, typename... Results,
+            typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
         auto when_all(connection& c, Work&& w, std::shared_future<Results>... f) noexcept -> std::future<decltype(w(f.get()...))>
         {
             return dispatch(c, [w](std::shared_future<Results>... f) mutable {
-                return worker::get_work_done(w, f...);
+                return when_worker::work(w, f...);
             }, std::shared_future<Results>(f)...);
         }
 
@@ -195,24 +204,27 @@ namespace eventually {
          * @result future for this task
          */
         template <typename Work, typename Result, typename... Results,
-            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0, typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0,
+            typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
         auto when_any(Work&& w, std::future<Result>&& f, std::future<Results>&&... fs) noexcept -> std::future<decltype(w(f.get()))>
         {
             return when_any(std::forward<Work>(w), f.share(), fs.share()...);
         }
 
         template <typename Work, typename Result, typename... Results,
-            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0, typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0,
+            typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
         auto when_any(Work&& w, std::shared_future<Result> f, std::shared_future<Results>... fs) noexcept -> std::future<decltype(w(f.get()))>
         {
-            shared_worker<decltype(w(f.get()))> p;
+            when_any_worker<decltype(w(f.get()))> p;
             when_any(std::forward<Work>(w), p, f, fs...);
             return p.get_future();
         }
 
         template <typename Work, typename FinalResult, typename Result, typename... Results,
-            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0, typename std::enable_if<is_callable_with_result<Work(Result), FinalResult>::value, int>::type = 0>
-        void when_any(Work&& w, shared_worker<FinalResult> p, std::shared_future<Result> f, std::shared_future<Results>... fs) noexcept
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0,
+            typename std::enable_if<is_callable_with_result<Work(Result), FinalResult>::value, int>::type = 0>
+        void when_any(Work&& w, when_any_worker<FinalResult> p, std::shared_future<Result> f, std::shared_future<Results>... fs) noexcept
         {
             when_any(std::forward<Work>(w), p, fs...);
             when_any(std::forward<Work>(w), p, f);
@@ -220,10 +232,57 @@ namespace eventually {
 
         template <typename Work, typename FinalResult, typename Result,
             typename std::enable_if<is_callable_with_result<Work(Result), FinalResult>::value, int>::type = 0>
-        void when_any(Work&& w, shared_worker<FinalResult> p, std::shared_future<Result> f) noexcept
+        void when_any(Work&& w, when_any_worker<FinalResult> p, std::shared_future<Result> f) noexcept
         {
             dispatch([w, p, f]() mutable {
-                return p.get_work_done(w, f);
+                return p.work(w, f);
+            });
+        }
+
+        /**
+         * Call a function when every future of a list is met
+         * Only works with a list of futures of the same type
+         * @param work function that accepts a container of results as parameter
+         * @param futures to wait for
+         * @result future for this task
+         */
+        template <typename Work, typename Result, typename... Results,
+            typename Container = std::vector<Result>,
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0,
+            typename std::enable_if<is_callable<Work(Container&)>::value, int>::type = 0>
+        auto when_every(Work&& w, std::future<Result>&& f, std::future<Results>&&... fs) noexcept -> std::future<Container>
+        {
+            return when_every(std::forward<Work>(w), f.share(), fs.share()...);
+        }
+
+        template <typename Work, typename Result, typename... Results,
+            typename Container = std::vector<Result>,        
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0,
+            typename std::enable_if<is_callable<Work(Container&)>::value, int>::type = 0>
+        auto when_every(Work&& w, std::shared_future<Result> f, std::shared_future<Results>... fs) noexcept -> std::future<Container>
+        {
+            when_every_worker<Result> p(sizeof...(Results)+1);
+            when_every(std::forward<Work>(w), p, f, fs...);
+            return p.get_future();
+        }
+
+        template <typename Work, typename Result, typename... Results,
+            typename Container = std::vector<Result>,        
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0,
+            typename std::enable_if<is_callable<Work(Container&)>::value, int>::type = 0>
+        void when_every(Work&& w, when_every_worker<Result> p, std::shared_future<Result> f, std::shared_future<Results>... fs) noexcept
+        {
+            when_every(std::forward<Work>(w), p, fs...);
+            when_every(std::forward<Work>(w), p, f);
+        }
+
+        template <typename Work, typename Result,
+            typename Container = std::vector<Result>,        
+            typename std::enable_if<is_callable<Work(Container&)>::value, int>::type = 0>
+        void when_every(Work&& w, when_every_worker<Result> p, std::shared_future<Result> f) noexcept
+        {
+            dispatch([w, p, f]() mutable {
+                return p.work(w, f);
             });
         }
 
