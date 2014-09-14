@@ -24,7 +24,7 @@ TEST(http_client, basic) {
 
 TEST(http_client, post) {
 
-	http_client client;
+    http_client client;
     http_request req("http://httpbin.org/post", http_method::POST);
     req.set_body_str("test_eventually");
 
@@ -58,7 +58,7 @@ TEST(http_client, response_headers) {
 
     ASSERT_LT(0, resp.get_headers().size());
     ASSERT_EQ(200, resp.get_code());
-    ASSERT_STREQ("application/json", resp.get_header("Content-Type")->second.c_str());
+    ASSERT_STREQ("application/json", resp.find_header("Content-Type")->second.c_str());
 }
 
 TEST(http_client, interrupt) {
