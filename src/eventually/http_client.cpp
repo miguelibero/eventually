@@ -121,11 +121,40 @@ namespace eventually {
 		curl_object curl;
 		curl.init();
 		curl.setopt(CURLOPT_URL, req.get_url());
-		curl.setopt(CURLOPT_FOLLOWLOCATION, 1L);
-		curl.setopt(CURLOPT_NOPROGRESS, 1L);
+		curl.setopt(CURLOPT_FOLLOWLOCATION, true);
+		curl.setopt(CURLOPT_NOPROGRESS, true);
+
+		switch(req.get_method())
+		{
+			case http_request::method::GET:
+				curl.setopt(CURLOPT_HTTPGET, true);
+				curl.setopt(CURLOPT_POST, false);				
+				curl.setopt(CURLOPT_PUT, false);
+				break;
+			case http_request::method::POST:
+				curl.setopt(CURLOPT_POST, true);
+				curl.setopt(CURLOPT_HTTPGET, false);
+				curl.setopt(CURLOPT_PUT, false);
+				curl.setopt(CURLOPT_POSTFIELDS, req.get_body().data());
+				curl.setopt(CURLOPT_POSTFIELDSIZE, req.get_body_size());
+				break;
+			case http_request::method::PUT:
+				curl.setopt(CURLOPT_PUT, true);
+				curl.setopt(CURLOPT_POST, false);
+				curl.setopt(CURLOPT_HTTPGET, false);
+				break;
+			default:
+				curl.setopt(CURLOPT_CUSTOMREQUEST, req.get_method_str());
+				curl.setopt(CURLOPT_PUT, false);
+				curl.setopt(CURLOPT_POST, false);
+				curl.setopt(CURLOPT_HTTPGET, false);
+				break;
+		}
+
 		http_response resp;
         curl.setopt(CURLOPT_WRITEFUNCTION, write_data);
         curl.setopt(CURLOPT_WRITEDATA, &resp);
+		
 		curl.perform();
 		long http_code = 0;
 		curl.getinfo(CURLINFO_RESPONSE_CODE, &http_code);
