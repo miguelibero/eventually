@@ -3,9 +3,9 @@
 #include <eventually/http_request.hpp>
 #include <eventually/http_response.hpp>
 #include <eventually/dispatcher.hpp>
+#include <eventually/connection.hpp>
 #include <eventually/thread_dispatcher.hpp>
 #include <functional>
-#include <iostream>
 #include <curl/curl.h>
 
 namespace eventually {
@@ -121,23 +121,31 @@ namespace eventually {
 		}
 	}
 
-	size_t write_data(void* ptr, size_t size, size_t nmemb, http_response* resp)
+	struct http_client_data
 	{
+		connection conn;
+		http_response resp;
+	};
+
+	size_t write_data(void* ptr, size_t size, size_t nmemb, http_client_data* data)
+	{
+		data->conn.interruption_point();
 		size_t n = (size * nmemb);
-		http_response::data& rbody = resp->get_body();
+		http_response::data& rbody = data->resp.get_body();
 		auto rptr = (http_response::data::value_type*)ptr;
 		rbody.insert( rbody.end(), rptr, rptr + n );
 		return n;
 	}
 
-	size_t write_header(char* buffer, size_t size, size_t nitems, http_response* resp)
+	size_t write_header(char* buffer, size_t size, size_t nitems, http_client_data* data)
 	{
+		data->conn.interruption_point();
 		size_t n = (size * nitems);
-		resp->add_header_str(std::string(buffer, n));
+		data->resp.add_header_str(std::string(buffer, n));
 		return n;
 	}
 
-	http_response http_client::send_dispatched(const http_request& req)
+	http_response http_client::send_dispatched(connection& c, const http_request& req)
 	{
 		curl_object curl;
 		curl.init();
@@ -161,24 +169,38 @@ namespace eventually {
 				break;
 		}
 
-		http_response resp;
+		http_client_data data{ c };
         curl.set_opt(CURLOPT_WRITEFUNCTION, write_data);
-        curl.set_opt(CURLOPT_WRITEDATA, &resp);
+        curl.set_opt(CURLOPT_WRITEDATA, &data);
         curl.set_opt(CURLOPT_HEADERFUNCTION, write_header);
-		curl.set_opt(CURLOPT_HEADERDATA, &resp);
+		curl.set_opt(CURLOPT_HEADERDATA, &data);
 
 		curl.perform();
 		long http_code = 0;
 		curl.get_info(CURLINFO_RESPONSE_CODE, &http_code);
-		resp.set_code(http_code);
+		data.resp.set_code(http_code);
 
-		return resp;
+		return data.resp;
 	}
 
 	std::future<http_response> http_client::send(const http_request& req)
 	{
-		return _dispatcher->dispatch(std::bind(&http_client::send_dispatched, this, req));
+		connection conn;
+		return send(conn, req);
 	}
 
+	std::future<http_response> http_client::send(connection& c, const http_request& req)
+	{
+		if(!_dispatcher)
+		{
+			throw new http_exception("No dispatcher found.");
+		}
+		return _dispatcher->dispatch(std::bind(&http_client::send_dispatched, this, c, req));
+	}
+
+	dispatcher& http_client::get_dispatcher()
+	{
+		return *_dispatcher;
+	}
 }
 

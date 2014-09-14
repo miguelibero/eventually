@@ -154,34 +154,25 @@ auto result = f.get();
 `eventually::thread_dispatcher` processes the tasks in a finite amount of threads
 (by default `std::thread::hardware_concurrency()`).
 
-## Usage example
+## http client
 
-This example shows how to implement an http client that uses a thread dispatcher
-to do the http requests without blocking. when there is a widget class that wants
-to get an http response and process it in the main thread.
+The library implements a simple http client using [libcurl](http://curl.haxx.se/libcurl/),
+that takes a `eventually::dispatcher` to do the asyncronous http requests.
 
 ```c++
-class http_client
-{
-private:
-    eventually::thread_dispatcher _dispatcher;
+http_client client;
+http_request req("http://httpbin.org/headers");
+req.get_headers().push_back({"X-Eventually", "true"});
+auto f = client.send(req);
+auto resp = f.get();
+```
 
-    http_response send_dispatched(eventually::connection& conn, http_request& req)
-    {
-        // this happens in another thread
-        // do http request
-        // call interruption point to check if connection was interrupted
-        conn.interruption_point();
-        // keep doing http request
-    }
+## Usage example
 
-public:
-    std::future<http_response> send(eventually::connection& conn, const http_request& req)
-    {
-        return _dispatcher.dispatch(conn, std::bind(&http_client::send_dispatched, this, conn, req));
-    }
-};
+This example shows a widget class that wants to get an http response
+and process it in the main thread.
 
+```c++
 class widget
 {
 private:
@@ -189,7 +180,7 @@ private:
     http_client& _http_client;
     eventually::dispatcher& _main_dispatcher;
 
-    void on_http_response(http_response resp)
+    void on_http_response(const http_response& resp)
     {
         // process response
     }

@@ -24,11 +24,16 @@ file(GLOB_RECURSE EVENTUALLY_TESTS
     "${EVENTUALLY_TESTS_DIR}/*.cpp"
 )
 
+find_library(CURL_LIBRARY
+    NAMES curl curllib libcurl_imp curllib_static
+    HINTS "${CMAKE_PREFIX_PATH}/curl/lib"
+)
+
 add_subdirectory("lib/test/gtest")
 enable_testing()
 include_directories("src" "test")
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 add_executable(runUnitTests ${EVENTUALLY_TESTS})
-target_link_libraries(eventually curl)
+target_link_libraries(eventually ${CURL_LIBRARY})
 target_link_libraries(runUnitTests eventually gtest gtest_main)
 add_test(runUnitTests runUnitTests)

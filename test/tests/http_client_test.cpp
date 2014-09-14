@@ -2,6 +2,8 @@
 #include <eventually/http_client.hpp>
 #include <eventually/http_request.hpp>
 #include <eventually/http_response.hpp>
+#include <eventually/dispatcher.hpp>
+#include <eventually/connection.hpp>
 #include <functional>
 #include "gtest/gtest.h"
 
@@ -59,3 +61,35 @@ TEST(http_client, response_headers) {
     ASSERT_STREQ("application/json", resp.get_header("Content-Type")->second.c_str());
 }
 
+TEST(http_client, interrupt) {
+
+    dispatcher d;
+    http_client client(d);
+    connection c;
+    http_request req("http://httpbin.org/get");
+    auto f = client.send(c, req);
+    c.interrupt();
+    d.process_all();
+
+    bool threw = false;
+    try
+    {
+        auto resp = f.get();
+    }
+    catch(const connection_interrupted&)
+    {
+        threw = true;
+    }
+    ASSERT_TRUE(threw);
+}
+
+TEST(http_client, when) {
+
+    http_client client;
+    http_request req("http://httpbin.org/get");
+    auto f = client.get_dispatcher().when([](const http_response& resp){
+        return resp.get_body_str().substr(0, 10);
+    }, client.send(req));
+
+    ASSERT_STREQ("{\n  \"args\"", f.get().c_str());
+}

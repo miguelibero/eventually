@@ -8,6 +8,7 @@
 namespace eventually{
 
 	class dispatcher;
+	class connection;
 	class http_request;
 	class http_response;
 
@@ -29,7 +30,7 @@ namespace eventually{
 		dispatcher* _dispatcher;
 		bool _delete_dispatcher;
 
-		http_response send_dispatched(const http_request& req);
+		http_response send_dispatched(connection& c, const http_request& req);
 
 	public:
 
@@ -38,7 +39,9 @@ namespace eventually{
 
 		~http_client();
 
+		dispatcher& get_dispatcher();
 		std::future<http_response> send(const http_request& req);
+		std::future<http_response> send(connection& c, const http_request& req);
 	};
 
 }
