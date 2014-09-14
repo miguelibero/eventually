@@ -60,4 +60,14 @@ namespace eventually{
 	{
 		return sizeof(data::value_type)*_body.size();
 	}
+
+	const http_request::headers& http_request::get_headers() const
+	{
+		return _headers;
+	}
+
+	http_request::headers& http_request::get_headers()
+	{
+		return _headers;
+	}
 }

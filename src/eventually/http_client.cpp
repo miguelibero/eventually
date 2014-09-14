@@ -5,6 +5,7 @@
 #include <eventually/dispatcher.hpp>
 #include <eventually/thread_dispatcher.hpp>
 #include <functional>
+#include <iostream>
 #include <curl/curl.h>
 
 namespace eventually {
@@ -31,10 +32,12 @@ namespace eventually {
     	CURLcode perform();
 
     	template<typename P>
-    	void setopt(CURLoption option, const P& parameter);
+    	CURLcode set_opt(CURLoption option, const P& parameter);
 
     	template<typename... P>
-    	void getinfo(CURLINFO info, P... p);
+    	void get_info(CURLINFO info, P... p);
+
+    	CURLcode set_headers(const http_headers& headers);
     };
 
     curl_object::curl_object():
@@ -62,21 +65,32 @@ namespace eventually {
     }
     
     template<typename P>
-    void curl_object::setopt(CURLoption option, const P& parameter)
+    CURLcode curl_object::set_opt(CURLoption option, const P& parameter)
     {
-    	curl_easy_setopt(_curl, option, parameter);
+    	return curl_easy_setopt(_curl, option, parameter);
     }
 
     template<>
-    void curl_object::setopt(CURLoption option, const std::string& parameter)
+    CURLcode curl_object::set_opt(CURLoption option, const std::string& parameter)
     {
-    	curl_easy_setopt(_curl, option, parameter.c_str());
+    	return curl_easy_setopt(_curl, option, parameter.c_str());
     }
 
     template<typename... P>
-    void curl_object::getinfo(CURLINFO info, P... p)
+    void curl_object::get_info(CURLINFO info, P... p)
     {
 		curl_easy_getinfo(_curl, info, p...);
+    }
+
+    CURLcode curl_object::set_headers(const http_headers& headers)
+    {
+    	curl_slist *list = nullptr;
+    	for(const http_header& h : headers)
+    	{
+    		std::string elm(h.first + ": " + h.second);
+    		list = curl_slist_append(list, elm.c_str());
+    	}
+       	return set_opt(CURLOPT_HTTPHEADER, list); 
     }
 
     curl_object::~curl_object()
@@ -116,48 +130,46 @@ namespace eventually {
 		return n;
 	}
 
+	size_t write_header(char* buffer, size_t size, size_t nitems, http_response* resp)
+	{
+		size_t n = (size * nitems);
+		resp->add_header_str(std::string(buffer, n));
+		return n;
+	}
+
 	http_response http_client::send_dispatched(const http_request& req)
 	{
 		curl_object curl;
 		curl.init();
-		curl.setopt(CURLOPT_URL, req.get_url());
-		curl.setopt(CURLOPT_FOLLOWLOCATION, true);
-		curl.setopt(CURLOPT_NOPROGRESS, true);
+		curl.set_opt(CURLOPT_URL, req.get_url());
+		curl.set_opt(CURLOPT_FOLLOWLOCATION, true);
+		curl.set_opt(CURLOPT_NOPROGRESS, true);
+		curl.set_headers(req.get_headers());
 
 		switch(req.get_method())
 		{
 			case http_request::method::GET:
-				curl.setopt(CURLOPT_HTTPGET, true);
-				curl.setopt(CURLOPT_POST, false);				
-				curl.setopt(CURLOPT_PUT, false);
+				curl.set_opt(CURLOPT_HTTPGET, true);
 				break;
 			case http_request::method::POST:
-				curl.setopt(CURLOPT_POST, true);
-				curl.setopt(CURLOPT_HTTPGET, false);
-				curl.setopt(CURLOPT_PUT, false);
-				curl.setopt(CURLOPT_POSTFIELDS, req.get_body().data());
-				curl.setopt(CURLOPT_POSTFIELDSIZE, req.get_body_size());
-				break;
-			case http_request::method::PUT:
-				curl.setopt(CURLOPT_PUT, true);
-				curl.setopt(CURLOPT_POST, false);
-				curl.setopt(CURLOPT_HTTPGET, false);
+				curl.set_opt(CURLOPT_POST, true);
+				curl.set_opt(CURLOPT_POSTFIELDS, req.get_body().data());
+				curl.set_opt(CURLOPT_POSTFIELDSIZE, req.get_body_size());
 				break;
 			default:
-				curl.setopt(CURLOPT_CUSTOMREQUEST, req.get_method_str());
-				curl.setopt(CURLOPT_PUT, false);
-				curl.setopt(CURLOPT_POST, false);
-				curl.setopt(CURLOPT_HTTPGET, false);
+				curl.set_opt(CURLOPT_CUSTOMREQUEST, req.get_method_str());
 				break;
 		}
 
 		http_response resp;
-        curl.setopt(CURLOPT_WRITEFUNCTION, write_data);
-        curl.setopt(CURLOPT_WRITEDATA, &resp);
-		
+        curl.set_opt(CURLOPT_WRITEFUNCTION, write_data);
+        curl.set_opt(CURLOPT_WRITEDATA, &resp);
+        curl.set_opt(CURLOPT_HEADERFUNCTION, write_header);
+		curl.set_opt(CURLOPT_HEADERDATA, &resp);
+
 		curl.perform();
 		long http_code = 0;
-		curl.getinfo(CURLINFO_RESPONSE_CODE, &http_code);
+		curl.get_info(CURLINFO_RESPONSE_CODE, &http_code);
 		resp.set_code(http_code);
 
 		return resp;

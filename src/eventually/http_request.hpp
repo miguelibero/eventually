@@ -4,28 +4,22 @@
 #define _eventually_http_request_hpp_
 
 #include <string>
-#include <vector>
-#include <cstdint>
+#include <eventually/http_base.hpp>
 
 namespace eventually{
-
-	enum class http_request_method
-	{
-		GET,
-		POST,
-		PUT,
-		DELETE
-	};
 
 	class http_request
 	{
 	public:
-		typedef std::vector<uint8_t> data;
-		typedef http_request_method method;
+		typedef http_data data;
+		typedef http_method method;
+		typedef http_header header;
+		typedef http_headers headers;
 	private:
 		std::string _url;
 		method _method;
 		data _body;
+		headers _headers;
 	public:
 		http_request(const std::string& url, method m=method::GET);
 		const std::string& get_url() const;
@@ -36,6 +30,8 @@ namespace eventually{
 		data& get_body();
 		void set_body_str(const std::string& body);		
 		size_t get_body_size() const;
+		const headers& get_headers() const;
+		headers& get_headers();
 	};
 
 }
