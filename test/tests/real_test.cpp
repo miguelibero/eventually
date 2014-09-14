@@ -1,37 +1,12 @@
 
 #include <eventually/thread_dispatcher.hpp>
+#include <eventually/http_request.hpp>
+#include <eventually/http_response.hpp>
+#include <eventually/http_client.hpp>
 #include <functional>
 #include "gtest/gtest.h"
 
 using namespace eventually;
-
-struct http_request
-{
-};
-
-struct http_response
-{
-};
-
-class http_client
-{
-private:
-    thread_dispatcher _dispatcher;
-
-    http_response send_dispatched(connection& conn, http_request& req)
-    {
-        std::this_thread::sleep_for(std::chrono::duration<float>(0.05f));
-        conn.interruption_point();
-        std::this_thread::sleep_for(std::chrono::duration<float>(0.05f));
-        return http_response();
-    }
-
-public:
-    std::future<http_response> send(connection& conn, const http_request& req)
-    {
-        return _dispatcher.dispatch(conn, std::bind(&http_client::send_dispatched, this, conn, req));
-    }
-};
 
 class widget
 {
@@ -41,7 +16,7 @@ private:
     dispatcher& _main_dispatcher;
     bool _finished;
 
-    void on_http_response(http_response resp)
+    void on_http_response(const http_response& resp)
     {
         _finished = true;
     }
@@ -54,7 +29,7 @@ public:
 
     void init()
     {
-        http_request req;
+        http_request req("http://httpbin.org");
         _main_dispatcher.when(_http_conn,
             std::bind(&widget::on_http_response, this, std::placeholders::_1),
             _http_client.send(_http_conn, req));
