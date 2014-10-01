@@ -21,7 +21,7 @@ namespace eventually {
         name_setup _name_setup;
         data_setup _data_setup;
 
-        data_ptr when_loaded(data_ptr&& data)
+        data_ptr when_loaded(data_ptr data)
         {
             if(_data_setup)
             {

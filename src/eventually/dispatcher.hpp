@@ -67,7 +67,9 @@ namespace eventually {
         template <typename Work, typename Result, typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
         auto when(Work&& w, std::future<Result>&& f) NOEXCEPT -> std::future<decltype(w(f.get()))>
         {
-            return when(std::forward<Work>(w), f.share());
+            return dispatch([w](std::future<Result> f) mutable {
+                return when_worker::work(w, std::move(f));
+            }, std::move(f));
         }
 
         template <typename Work, typename Result, typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>

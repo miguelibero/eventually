@@ -219,6 +219,13 @@ namespace eventually {
             return w(fs.get()...);
         }
 
+        template <typename Work, typename... Results,
+            typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
+        static auto work(Work& w, std::future<Results>&... fs) -> decltype(w(fs.get()...))
+        {
+            return w(fs.get()...);
+        }
+
         template <typename Work,
             typename std::enable_if<is_callable<Work()>::value, int>::type = 0>
         static auto work(Work& w, std::shared_future<void>& f) -> decltype(w())
