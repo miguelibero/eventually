@@ -6,6 +6,8 @@
 
 namespace eventually {
 
+#ifndef _MSC_VER
+
     /**
      * is_callable implemtnation taken from this article
      * http://talesofcpp.fusionfenix.com/post-11/true-story-call-me-maybe
@@ -82,6 +84,16 @@ namespace eventually {
     struct is_callable
     : detail::is_callable_impl<Expr>
     {};
+
+#else
+
+	template <typename Expr>
+	struct is_callable
+		: std::true_type
+	{};
+
+
+#endif
 
     template<typename Expr>
     class result_of;

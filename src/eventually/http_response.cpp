@@ -3,6 +3,7 @@
 #include <eventually/http_response.hpp>
 #include <utility>
 #include <algorithm>
+#include <sstream>
 
 namespace eventually{
 
@@ -46,10 +47,12 @@ namespace eventually{
         return _headers;
     }
 
-    inline void trim(std::string &s)
+    inline void trim(std::string &str)
     {
-        s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-        s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+		std::stringstream trimmer;
+		trimmer << str;
+		str.clear();
+		trimmer >> str;
     }
 
     bool http_response::add_header_str(const std::string& str)

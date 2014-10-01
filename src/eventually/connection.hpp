@@ -2,6 +2,7 @@
 #ifndef _eventually_connection_hpp_
 #define _eventually_connection_hpp_
 
+#include <eventually/define.hpp>
 #include <memory>
 #include <exception>
 #include <mutex>
@@ -14,13 +15,12 @@ namespace eventually {
      */
     struct connection_data
     {
-        std::atomic_bool interrupt_flag;
-        std::mutex _mutex;
+        std::atomic_bool _interrupt_flag;
+        std::mutex _work_mutex;
 
-        connection_data():
-        interrupt_flag(false)
-        {
-        }
+        connection_data();
+        void interrupt() NOEXCEPT;
+        void interruption_point();
     };
 
     /**
@@ -29,7 +29,7 @@ namespace eventually {
      */
     class connection_interrupted : public std::exception
     {
-        virtual const char* what() const throw();
+        virtual const char* what() const THROW;
     };
 
     /**
@@ -42,13 +42,13 @@ namespace eventually {
     public:
         connection();
         virtual ~connection();
-        void interrupt() noexcept;
+        void interrupt() NOEXCEPT;
         void interruption_point();
 
         template <typename Work>
-        auto get_work_done(Work&& w) -> decltype(w())
+        auto work(Work&& w) -> decltype(w())
         {
-            std::lock_guard<std::mutex> lock_(_data->_mutex);
+            std::lock_guard<std::mutex> lock_(_data->_work_mutex);
             interruption_point();
             return w();
         }

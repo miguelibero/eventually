@@ -19,7 +19,7 @@ TEST(thread_dispatcher, process) {
 
 TEST(thread_dispatcher, process_wait) {
 
-    thread_dispatcher d(thread_dispatcher::duration(0.01));
+	thread_dispatcher d(std::chrono::milliseconds(10));
 
     auto future1 = d.dispatch([](int a, int b){
         return a+b;
@@ -49,9 +49,10 @@ TEST(dispatcher, connection_interrupt) {
     connection c;
 
     bool done = false;
-    std::atomic_bool block(true);
+	std::atomic_bool block;
+	block = true;
     d.dispatch(c, [c, &block, &done]() mutable {
-        std::this_thread::sleep_for(std::chrono::duration<float>(0.02f));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         c.interruption_point();
         done = true;
     });

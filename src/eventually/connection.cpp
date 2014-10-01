@@ -3,9 +3,28 @@
 
 namespace eventually {
 
-    const char* connection_interrupted::what() const throw()
+    const char* connection_interrupted::what() const THROW
     {
         return "connection interrupted";    
+    }
+
+    connection_data::connection_data()
+    {
+        _interrupt_flag.store(false);
+    }
+
+
+    void connection_data::interrupt() NOEXCEPT
+    {
+        _interrupt_flag.store(true);
+    }
+
+    void connection_data::interruption_point()
+    {
+        if(_interrupt_flag.load())
+        {
+            throw connection_interrupted();
+        }
     }
 
     connection::connection():
@@ -17,17 +36,14 @@ namespace eventually {
     {
     }
 
-    void connection::interrupt() noexcept
+    void connection::interrupt() NOEXCEPT
     {
-        _data->interrupt_flag = true;
+        _data->interrupt();
     }
 
     void connection::interruption_point()
     {
-        if(_data->interrupt_flag)
-        {
-            throw connection_interrupted();
-        }
+        _data->interruption_point();
     }
 
     scoped_connection::~scoped_connection()

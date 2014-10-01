@@ -4,6 +4,7 @@
 
 #include <future>
 #include <memory>
+#include <eventually/define.hpp>
 #include <eventually/connection.hpp>
 #include <eventually/handler.hpp>
 
@@ -39,7 +40,7 @@ namespace eventually {
         template<class Work>
         task(Work&& w, Args&&... args):
         _handler(std::forward<Work>(w), std::forward<Args>(args)...),
-        _task([this](){ return get_work_done(); })
+        _task([this](){ return work(); })
         {
         }
 
@@ -47,7 +48,7 @@ namespace eventually {
         task(connection& c, Work&& w, Args&&... args):
         _connection(c),
         _handler(std::forward<Work>(w), std::forward<Args>(args)...),
-        _task([this](){ return get_work_done(); })
+        _task([this](){ return work(); })
         {
         }
 
@@ -66,9 +67,9 @@ namespace eventually {
             return _connection;
         }
 
-        Result get_work_done()
+        Result work()
         {
-            return _connection.get_work_done(_handler);
+            return _connection.work(_handler);
         }
 
         void operator()()
@@ -76,12 +77,12 @@ namespace eventually {
             _task();
         }
 
-        bool valid() const noexcept
+        bool valid() const NOEXCEPT
         {
             return _task.valid();
         }
 
-        void swap( task& other ) noexcept
+        void swap( task& other ) NOEXCEPT
         {
             _task.swap(other._task);
         }

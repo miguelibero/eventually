@@ -17,7 +17,7 @@ namespace eventually {
     {
 
     public:
-        typedef std::chrono::duration<double> duration;
+        typedef std::chrono::milliseconds duration;
     private:
         duration _wait;
         std::vector<std::thread> _threads;

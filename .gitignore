@@ -3,19 +3,24 @@
 /.settings/
 /*.o
 /*.exe
-Icon
+Icon
+
 .DS_Store
 .com.apple.timemachine.supported
 *.sw?
 *~.nib
 .fuse*
 
-build/
+/build/
 
 *.pbxuser
 *.perspective
 *.perspectivev3
 *.mode1v3
+*.vcxproj
+*.vcxproj.filters
+*.sln
+*.suo
 xcuserdata/
 *.orig
 
@@ -25,3 +30,5 @@ CTestTestfile.cmake
 Makefile
 /bin/
 cmake_install.cmake
+/Win32
+/lib/curl

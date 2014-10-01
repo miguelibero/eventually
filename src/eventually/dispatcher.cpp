@@ -7,7 +7,7 @@ namespace eventually {
     {
     }
 
-    bool dispatcher::process_all() noexcept
+    bool dispatcher::process_all() NOEXCEPT
     {
         bool result_ = false;
         while(process_one())
@@ -18,7 +18,7 @@ namespace eventually {
         return result_;
     }
 
-    bool dispatcher::process_one() noexcept
+    bool dispatcher::process_one() NOEXCEPT
     {
         basic_task_ptr task_;
         {
