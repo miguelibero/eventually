@@ -8,7 +8,7 @@ namespace eventually {
 	class dispatcher;
     class connection;
 
-    template<typename Loader>
+    template<typename Loader, typename std::enable_if<can_load_data<Loader>::value, int>::type = 0>
 	class setup_data_loader
 	{
     public:
@@ -21,7 +21,7 @@ namespace eventually {
         name_setup _name_setup;
         data_setup _data_setup;
 
-        data_ptr when_loaded(data_ptr data)
+        data_ptr when_loaded(data_ptr&& data)
         {
             if(_data_setup)
             {

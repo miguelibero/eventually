@@ -10,8 +10,6 @@
 using namespace eventually;
 
 
-/*
-
 TEST(data_loader, file) {
 
 	file_data_loader loader;
@@ -38,8 +36,6 @@ TEST(data_loader, setup) {
 	});
 	auto f = sloader.load("README");
 	auto data = f.get();
-	ASSERT_LT(1, data->size());
-	ASSERT_EQ(10, data->at(1));
+	ASSERT_EQ(1, data->size());
+	ASSERT_EQ(10, data->at(0));
 }
-
-*/
