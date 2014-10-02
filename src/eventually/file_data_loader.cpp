@@ -67,7 +67,7 @@ namespace eventually {
         {
             throw new data_exception("No dispatcher found.");
         }
-        return _dispatcher->dispatch(std::bind(&file_data_loader::load_dispatched, this, c, name));
+        return _dispatcher->dispatch(c, std::bind(&file_data_loader::load_dispatched, this, c, name));
     }
 
 }

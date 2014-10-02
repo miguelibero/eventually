@@ -19,6 +19,21 @@ TEST(dispatcher, process_one) {
     ASSERT_EQ(5, f.get());
 }
 
+TEST(dispatcher, unique_ptr) {
+
+    dispatcher d;
+
+    auto f = d.dispatch([](std::unique_ptr<int> ptr){
+        return std::move(ptr);
+    }, std::unique_ptr<int>(new int(5)));
+
+    ASSERT_TRUE(f.valid());
+
+    d.process_one();
+
+    ASSERT_EQ(5, *f.get());
+}
+
 
 TEST(dispatcher, bind) {
 
@@ -76,26 +91,6 @@ TEST(dispatcher, when_bind) {
     ASSERT_FLOAT_EQ(18.0f, f2.get());
 }
 
-TEST(dispatcher, when_shared) {
-
-    dispatcher d;
-
-    auto f1 = d.dispatch([](int a, int b){
-        return a+b;
-    }, 2, 3).share();
-
-    auto f2 = d.when([](int c){
-        return 2.0f*c ;
-    }, f1);
-
-    d.process_one();
-
-    ASSERT_EQ(5, f1.get());
-
-    d.process_one();
-
-    ASSERT_FLOAT_EQ(10.0f, f2.get());
-}
 
 TEST(dispatcher, when_combined) {
 
@@ -234,7 +229,6 @@ TEST(dispatcher, when_any) {
     ASSERT_EQ(1, f.get());
 }
 
-/*
 TEST(dispatcher, when_any_void) {
 
     dispatcher d;
@@ -247,7 +241,6 @@ TEST(dispatcher, when_any_void) {
 
     ASSERT_TRUE(called);
 }
-*/
 
 TEST(dispatcher, when_any_cancel) {
 

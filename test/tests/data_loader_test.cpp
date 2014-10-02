@@ -9,6 +9,9 @@
 
 using namespace eventually;
 
+
+/*
+
 TEST(data_loader, file) {
 
 	file_data_loader loader;
@@ -20,8 +23,6 @@ TEST(data_loader, file) {
 	std::string str(data->begin(), data->end());
 	ASSERT_NE(std::string::npos, str.find("Anthony Williams"));
 }
-
-/*
 
 TEST(data_loader, setup) {
 

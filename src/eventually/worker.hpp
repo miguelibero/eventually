@@ -66,7 +66,7 @@ namespace eventually {
         }
 
         template <typename Work, typename Result>
-        void work(Work& w, std::shared_future<Result>& f)
+        void work(Work& w, std::future<Result>& f)
         {
             try
             {
@@ -91,7 +91,7 @@ namespace eventually {
         }
 
         template <typename Work>
-        void work(Work& w, std::shared_future<void>& f)
+        void work(Work& w, std::future<void>& f)
         {
             try
             {
@@ -180,7 +180,7 @@ namespace eventually {
 
         template <typename Work,
             typename std::enable_if<is_callable<Work(Container&)>::value, int>::type = 0>
-        void work(Work& w, std::shared_future<Result>& f)
+        void work(Work& w, std::future<Result>& f)
         {
             try
             {
@@ -212,12 +212,6 @@ namespace eventually {
     private:
         when_worker();
     public:
-        template <typename Work, typename... Results,
-            typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
-        static auto work(Work& w, std::shared_future<Results>&... fs) -> decltype(w(fs.get()...))
-        {
-            return w(fs.get()...);
-        }
 
         template <typename Work, typename... Results,
             typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
@@ -228,7 +222,7 @@ namespace eventually {
 
         template <typename Work,
             typename std::enable_if<is_callable<Work()>::value, int>::type = 0>
-        static auto work(Work& w, std::shared_future<void>& f) -> decltype(w())
+        static auto work(Work& w, std::future<void>& f) -> decltype(w())
         {
             f.wait();
             return w();
@@ -245,7 +239,7 @@ namespace eventually {
     public:        
         template <typename Work, typename Result, typename Exception = std::exception,
             typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
-        static auto work(Work& w, std::shared_future<Result>& f) -> Result
+        static auto work(Work& w, std::future<Result>& f) -> Result
         {
             try
             {
@@ -259,7 +253,7 @@ namespace eventually {
 
         template <typename Work, typename Exception = std::exception,
         typename std::enable_if<is_callable<Work(const Exception&)>::value, int>::type = 0>
-        static auto work(Work& w, std::shared_future<void>& f) -> void
+        static auto work(Work& w, std::future<void>& f) -> void
         {
             try
             {
