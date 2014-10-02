@@ -1,6 +1,7 @@
 
 #include <eventually/task.hpp>
 #include <functional>
+#include <memory>
 #include "gtest/gtest.h"
 
 using namespace eventually;
@@ -18,7 +19,8 @@ TEST(task, basic) {
 
 TEST(task, make_task_ptr) {
 
-    auto t = make_task_ptr([](int a, int b){
+    connection c;
+    auto t = make_task_ptr(c, [](int a, int b){
         return a+b;
     }, 2, 3);
 
@@ -50,5 +52,15 @@ TEST(task, interrupt) {
     ASSERT_TRUE(interrupted);
 }
 
+TEST(task, unique_ptr) {
 
+    std::unique_ptr<int> p(new int(5));
+    connection c;
+    auto t = make_task_ptr(c, [](std::unique_ptr<int> p){
+        return *p;
+    }, std::move(p));
 
+    (*t)();
+
+    ASSERT_EQ(5, t->get_future().get());
+}

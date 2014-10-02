@@ -7,6 +7,7 @@
 #include <eventually/define.hpp>
 #include <eventually/connection.hpp>
 #include <eventually/handler.hpp>
+#include <eventually/is_callable.hpp>
 
 namespace eventually {
 
@@ -98,21 +99,17 @@ namespace eventually {
         }
     };
 
+    template <typename Work, typename... Args>
+    using work_task = task<typename result_of<Work(Args...)>::type, Args...>;
+
     /**
      * Helper method to generate task pointers
      */
     template <typename Work, typename... Args>
-    auto make_task_ptr(Work&& w, Args&&... args) -> std::unique_ptr<task<decltype(w(args...)), Args...>>
+    auto make_task_ptr(connection& c, Work&& w, Args&&... args) -> std::unique_ptr<work_task<Work, Args...>>
     {
-        return std::unique_ptr<task<decltype(w(args...)), Args...>>(
-                new task<decltype(w(args...)), Args...>(std::forward<Work>(w), std::forward<Args>(args)...));
-    }
-
-    template <typename Work, typename... Args>
-    auto make_task_ptr(connection& c, Work&& w, Args&&... args) -> std::unique_ptr<task<decltype(w(args...)), Args...>>
-    {
-        return std::unique_ptr<task<decltype(w(args...)), Args...>>(
-                new task<decltype(w(args...)), Args...>(c, std::forward<Work>(w), std::forward<Args>(args)...));
+        return std::unique_ptr<work_task<Work, Args...>>(
+                new work_task<Work, Args...>(c, std::forward<Work>(w), std::forward<Args>(args)...));
     }
 
 }

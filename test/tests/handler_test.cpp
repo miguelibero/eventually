@@ -1,9 +1,11 @@
 
 #include <eventually/handler.hpp>
 #include <functional>
+#include <memory>
 #include "gtest/gtest.h"
 
 using namespace eventually;
+
 
 TEST(handler, basic) {
 
@@ -23,7 +25,6 @@ TEST(handler, make) {
     ASSERT_EQ(4, h());
 }
 
-
 TEST(handler, arguments) {
 
     handler<int, int, int> h([](int a, int b){
@@ -40,5 +41,16 @@ TEST(handler, make_arguments) {
     }, 2, 3);
 
     ASSERT_EQ(5, h());
+}
 
+
+TEST(handler, unique_ptr) {
+
+    std::unique_ptr<int> p(new int(5));
+
+    auto h = make_handler([](std::unique_ptr<int> ptr){
+        return *ptr;
+    }, std::move(p));
+
+    ASSERT_EQ(5, h());
 }

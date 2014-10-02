@@ -17,7 +17,7 @@ namespace eventually {
     {
     private:
         std::function<Result(Args...)> _work;
-        std::tuple<Args...> _args;
+        mutable std::tuple<Args...> _args;
 
     public:
 
@@ -30,14 +30,17 @@ namespace eventually {
 
         Result operator()() const
         {
-            return apply(_work, _args);
+            return apply(_work, std::move(_args));
         }
     };
 
     template <typename Work, typename... Args>
-    auto make_handler(Work&& w, Args&&... args) -> handler<decltype(w(args...)), Args...>
+    using work_handler = handler<typename result_of<Work(Args...)>::type, Args...>;
+
+    template <typename Work, typename... Args>
+    auto make_handler(Work&& w, Args&&... args) -> work_handler<Work, Args...>
     {
-        return handler<decltype(w(args...)), Args...>(std::forward<Work>(w), std::forward<Args>(args)...);
+        return work_handler<Work, Args...>(std::forward<Work>(w), std::forward<Args>(args)...);
     }
 
 }
