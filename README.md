@@ -167,6 +167,18 @@ auto f = client.send(req);
 auto resp = f.get();
 ```
 
+## data loaders
+
+The library implements some classes to load data asyncronously.
+
+```c++
+file_data_loader loader;
+connection conn;
+loader.get_dispatcher().when(conn, [](std::unique_ptr<std::vector<uint8_t>>&& data){
+    // do stuff with the file contents
+}, loader.load(conn, "/etc/magic"));
+```
+
 ## Usage example
 
 This example shows a widget class that wants to get an http response
