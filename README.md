@@ -169,7 +169,9 @@ auto resp = f.get();
 
 ## data loaders
 
-The library implements some classes to load data asyncronously.
+The library implements some classes to load data asyncronously. The data
+is stored in a vector `std::unique_ptr` and we use move semantics to
+prevent from copying it.
 
 ```c++
 file_data_loader loader;
