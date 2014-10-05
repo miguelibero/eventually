@@ -11,6 +11,45 @@
 
 namespace eventually {
 
+    /**
+     * Used to get the future and pass it to a work function object
+     */
+    class when_worker
+    {
+    private:
+        when_worker();
+    public:
+
+        template <typename Work, typename... Results,
+            typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
+        static auto work(Work& w, std::future<Results>&... fs) -> decltype(w(fs.get()...))
+        {
+            return w(fs.get()...);
+        }
+
+        template <typename Work,
+            typename std::enable_if<is_callable<Work()>::value, int>::type = 0>
+        static auto work(Work& w, std::future<void>& f) -> decltype(w())
+        {
+            f.wait();
+            return w();
+        }
+
+        template <typename Work, typename FinalResult, typename... Results>
+        static void promised_work(Work& w, std::promise<FinalResult>& p, std::future<Results>&... fs)
+        {
+            p.set_value(work(w, fs...));
+        }
+
+
+        template <typename Work, typename... Results>
+        static void promised_work(Work& w, std::promise<void>& p, std::future<Results>&... fs)
+        {
+            work(w, fs...);
+            p.set_value();
+        }
+    };
+
     template<typename FinalResult>
     struct when_any_worker_data
     {
@@ -74,33 +113,7 @@ namespace eventually {
                 _data->mutex.lock();
                 if(!_data->worked)
                 {
-                    _data->promise.set_value(w(f.get()));
-                    _data->worked = true;
-                    _data->mutex.unlock();
-                }
-                else
-                {
-                    _data->mutex.unlock();
-                    f.wait();
-                }
-            }
-            catch(...)
-            {
-                catch_exception();
-            }
-        }
-
-        template <typename Work>
-        void work(Work& w, std::future<void>& f)
-        {
-            try
-            {
-                _data->conn.interruption_point();
-                _data->mutex.lock();
-                if(!_data->worked)
-                {
-                    f.wait();
-                    _data->promise.set_value(w());
+                    when_worker::promised_work(w, _data->promise, f);
                     _data->worked = true;
                     _data->mutex.unlock();
                 }
@@ -201,31 +214,6 @@ namespace eventually {
         std::future<Container> get_future()
         {
             return _data->promise.get_future();
-        }
-    };
-
-    /**
-     * Used to get the future and pass it to a work function object
-     */
-    class when_worker
-    {
-    private:
-        when_worker();
-    public:
-
-        template <typename Work, typename... Results,
-            typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
-        static auto work(Work& w, std::future<Results>&... fs) -> decltype(w(fs.get()...))
-        {
-            return w(fs.get()...);
-        }
-
-        template <typename Work,
-            typename std::enable_if<is_callable<Work()>::value, int>::type = 0>
-        static auto work(Work& w, std::future<void>& f) -> decltype(w())
-        {
-            f.wait();
-            return w();
         }
     };
 

@@ -187,6 +187,48 @@ namespace eventually {
             return p.get_future();
         }
 
+        // special cases for void futures
+        template <typename Work, typename Result, typename... Results,
+            typename std::enable_if<is_same<Result, void>::value, int>::type = 0,
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0,
+            typename std::enable_if<is_callable<Work()>::value, int>::type = 0>
+        auto when_any(Work&& w, std::future<Result>&& f, std::future<Results>&&... fs) NOEXCEPT -> std::future<decltype(w())>
+        {
+            connection c;
+            return when_any(c, std::forward<Work>(w), std::move(f), std::move(fs)...);
+        }
+
+        template <typename Work, typename FinalResult, typename Result, typename... Results,
+            typename std::enable_if<is_same<Result, void>::value, int>::type = 0,
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0,
+            typename std::enable_if<is_callable_with_result<Work(), FinalResult>::value, int>::type = 0>
+        void when_any(Work&& w, when_any_worker<FinalResult> p, std::future<Result>&& f, std::future<Results>&&... fs) NOEXCEPT
+        {
+            when_any(std::forward<Work>(w), p, std::move(fs)...);
+            when_any(std::forward<Work>(w), p, std::move(f));
+        }
+
+        template <typename Work, typename FinalResult, typename Result,
+            typename std::enable_if<is_same<Result, void>::value, int>::type = 0,
+            typename std::enable_if<is_callable_with_result<Work(), FinalResult>::value, int>::type = 0>
+        void when_any(Work&& w, when_any_worker<FinalResult> p, std::future<Result> f) NOEXCEPT
+        {
+            dispatch([w, p](std::future<Result>&& f) mutable {
+                return p.work(w, f);
+            }, std::move(f));
+        }        
+
+        template <typename Work, typename Result, typename... Results,
+            typename std::enable_if<is_same<Result, void>::value, int>::type = 0,
+            typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0,
+            typename std::enable_if<is_callable<Work()>::value, int>::type = 0>
+        auto when_any(connection& c, Work&& w, std::future<Result>&& f, std::future<Results>&&... fs) NOEXCEPT -> std::future<decltype(w())>
+        {
+            when_any_worker<decltype(w())> p(sizeof...(Results)+1, c);
+            when_any(std::forward<Work>(w), p, std::move(f), std::move(fs)...);
+            return p.get_future();
+        }
+
         /**
          * Call a function when every future of a list is met
          * Only works with a list of futures of the same type

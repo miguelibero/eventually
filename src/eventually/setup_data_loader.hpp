@@ -8,7 +8,9 @@ namespace eventually {
 	class dispatcher;
     class connection;
 
-    template<typename Loader, typename std::enable_if<can_load_data<Loader>::value, int>::type = 0>
+    template<typename Loader,
+        typename std::enable_if<can_load_data<Loader>::value, int>::type = 0,
+        typename std::enable_if<has_dispatcher<Loader>::value, int>::type = 0>
 	class setup_data_loader
 	{
     public:
