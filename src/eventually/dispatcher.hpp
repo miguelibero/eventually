@@ -11,7 +11,6 @@
 #include <deque>
 #include <memory>
 #include <mutex>
-#include <vector>
 
 namespace eventually {
 
@@ -237,19 +236,17 @@ namespace eventually {
          * @result future for this task
          */
         template <typename Work, typename Result, typename... Results,
-            typename Container = std::vector<Result>,
             typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0,
-            typename std::enable_if<is_callable<Work(Container&)>::value, int>::type = 0>
-        auto when_every(Work&& w, std::future<Result>&& f, std::future<Results>&&... fs) NOEXCEPT -> std::future<Container>
+            typename std::enable_if<is_callable<Work(when_every_container<Result>&)>::value, int>::type = 0>
+        auto when_every(Work&& w, std::future<Result>&& f, std::future<Results>&&... fs) NOEXCEPT -> when_every_future<Result>
         {
             connection c;
             return when_every(c, std::forward<Work>(w), std::move(f), std::move(fs)...);
         }
 
         template <typename Work, typename Result, typename... Results,
-            typename Container = std::vector<Result>,        
             typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0,
-            typename std::enable_if<is_callable<Work(Container&)>::value, int>::type = 0>
+            typename std::enable_if<is_callable<Work(when_every_container<Result>&)>::value, int>::type = 0>
         void when_every(Work&& w, when_every_worker<Result> p, std::future<Result> f, std::future<Results>... fs) NOEXCEPT
         {
             when_every(std::forward<Work>(w), p, std::move(fs)...);
@@ -257,8 +254,7 @@ namespace eventually {
         }
 
         template <typename Work, typename Result,
-            typename Container = std::vector<Result>,        
-            typename std::enable_if<is_callable<Work(Container&)>::value, int>::type = 0>
+            typename std::enable_if<is_callable<Work(when_every_container<Result>&)>::value, int>::type = 0>
         void when_every(Work&& w, when_every_worker<Result> p, std::future<Result> f) NOEXCEPT
         {
             dispatch([w, p](std::future<Result>&& f) mutable {
@@ -267,10 +263,9 @@ namespace eventually {
         }
 
         template <typename Work, typename Result, typename... Results,
-            typename Container = std::vector<Result>,
             typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0,
-            typename std::enable_if<is_callable<Work(Container&)>::value, int>::type = 0>
-        auto when_every(connection& c, Work&& w, std::future<Result>&& f, std::future<Results>&&... fs) NOEXCEPT -> std::future<Container>
+            typename std::enable_if<is_callable<Work(when_every_container<Result>&)>::value, int>::type = 0>
+        auto when_every(connection& c, Work&& w, std::future<Result>&& f, std::future<Results>&&... fs) NOEXCEPT -> when_every_future<Result>
         {
             when_every_worker<Result> p(sizeof...(Results)+1, c);
             when_every(std::forward<Work>(w), p, std::move(f), std::move(fs)...);
@@ -279,11 +274,10 @@ namespace eventually {
 
 
         template <typename Result, typename... Results,
-            typename Container = std::vector<Result>,
             typename std::enable_if<is_same<Result, Results...>::value, int>::type = 0>
-        auto when_every(std::future<Result>&& f, std::future<Results>&&... fs) NOEXCEPT -> std::future<Container>
+        auto when_every(std::future<Result>&& f, std::future<Results>&&... fs) NOEXCEPT -> when_every_future<Result>
         {
-            return when_every([](const Container&){}, std::move(f), std::move(fs)...);
+            return when_every([](const when_every_container<Result>&){}, std::move(f), std::move(fs)...);
         }
 
         bool process_all() NOEXCEPT;

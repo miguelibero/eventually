@@ -135,14 +135,15 @@ namespace eventually {
         }
     };
 
-    template<typename Result,
-        typename Container = std::vector<Result>>
+    template<typename Result>
     struct when_every_worker_data
     {
+        typedef std::vector<Result> container;
+
         size_t size;
-        Container results;
+        container results;
         std::mutex mutex;
-        std::promise<Container> promise;
+        std::promise<container> promise;
         connection conn;        
 
         when_every_worker_data(size_t size, connection& c):
@@ -162,15 +163,17 @@ namespace eventually {
      * Used to share a promise between all the futures
      * when calling dispatcher::when_every
      */
-    template<typename Result,
-        typename Container = std::vector<Result>>
+    template<typename Result>
     class when_every_worker
     {
+    public:
+        typedef when_every_worker_data<Result> data;
+        typedef typename data::container container;
     private:
-        std::shared_ptr<when_every_worker_data<Result>> _data;
+        std::shared_ptr<data> _data;
 
         template <typename Work,
-            typename std::enable_if<is_callable<Work(Container&)>::value, int>::type = 0>
+            typename std::enable_if<is_callable<Work(container&)>::value, int>::type = 0>
         void step(Work& w)
         {
             w(_data->results);
@@ -192,7 +195,7 @@ namespace eventually {
         }
 
         template <typename Work,
-            typename std::enable_if<is_callable<Work(Container&)>::value, int>::type = 0>
+            typename std::enable_if<is_callable<Work(container&)>::value, int>::type = 0>
         void work(Work& w, std::future<Result>& f)
         {
             try
@@ -211,11 +214,17 @@ namespace eventually {
             }
         }
 
-        std::future<Container> get_future()
+        std::future<container> get_future()
         {
             return _data->promise.get_future();
         }
     };
+
+    template <typename Result>
+    using when_every_container = typename when_every_worker<Result>::container;
+
+    template <typename Result>
+    using when_every_future = std::future<when_every_container<Result>>;
 
     /**
      * Used to catch an exception when getting a future
