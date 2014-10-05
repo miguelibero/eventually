@@ -96,7 +96,7 @@ namespace eventually {
 #endif
 
     template<typename Expr>
-    class result_of;
+    struct result_of;
 
     template<typename F, typename... Args>
     struct result_of<F(Args...)>

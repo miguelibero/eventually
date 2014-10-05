@@ -2,6 +2,7 @@
 #define _eventually_setup_data_loader_hpp_
 
 #include <eventually/data_loader.hpp>
+#include <eventually/connection.hpp>
 
 namespace eventually {
 
