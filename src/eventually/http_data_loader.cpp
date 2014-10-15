@@ -29,7 +29,7 @@ namespace eventually {
         }
     }
 
-    data_ptr http_data_loader::when_sent(connection& c, http_response&& resp)
+    data_ptr http_data_loader::when_sent(connection& c, http_response resp)
     {
         c.interruption_point();
         data_ptr p(new data());

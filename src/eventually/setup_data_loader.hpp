@@ -24,15 +24,6 @@ namespace eventually {
         name_setup _name_setup;
         data_setup _data_setup;
 
-        data_ptr when_loaded(data_ptr&& data)
-        {
-            if(_data_setup)
-            {
-                _data_setup(*data);
-            }
-            return std::move(data);
-        }
-
     public:
 
         setup_data_loader(Loader* l=nullptr):
@@ -74,9 +65,13 @@ namespace eventually {
             {
                 _name_setup(sname);
             }
-            return _loader->get_dispatcher().when(
-                std::bind(&setup_data_loader::when_loaded, this, std::placeholders::_1),
-                _loader->load(c, sname));
+			return _loader->get_dispatcher().when([this](data_ptr&& data){
+				if(_data_setup)
+				{
+					_data_setup(*data);
+				}
+				return std::move(data);
+			}, _loader->load(c, sname));
         }
 
         std::future<data_ptr> load(const std::string& name)

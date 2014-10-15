@@ -49,9 +49,7 @@ TEST(dispatcher, connection_interrupt) {
     connection c;
 
     bool done = false;
-	std::atomic_bool block;
-	block = true;
-    d.dispatch(c, [c, &block, &done]() mutable {
+    d.dispatch(c, [c, &done]() mutable {
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         c.interruption_point();
         done = true;
@@ -74,3 +72,17 @@ TEST(thread_dispatcher, when_combined_scoped_connection) {
         }, 2, 3));
     }
 }
+
+/*
+TEST(thread_dispatcher, race_condition) {
+    int var;
+
+    std::thread([&var](){
+        var++;
+    });
+
+    std::thread([&var](){
+        var++;
+    });
+}
+*/

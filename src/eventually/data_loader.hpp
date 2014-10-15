@@ -28,6 +28,8 @@ namespace eventually {
     typedef std::vector<uint8_t> data;
     typedef std::unique_ptr<data> data_ptr;
 
+#ifndef _MSC_VER
+
     /**
      * The type trait to detect a valid data loader.
      * Data loaders should have a method called
@@ -45,7 +47,17 @@ namespace eventually {
     template <typename T>
     using has_dispatcher = std::is_same<
       decltype(std::declval<T>().get_dispatcher()), dispatcher&>;
+#else
+	template<typename T>
+	struct can_load_data
+	: std::true_type
+	{};
 
+	template<typename T>
+	struct has_dispatcher
+		: std::true_type
+	{};
+#endif
 }
 
 #endif

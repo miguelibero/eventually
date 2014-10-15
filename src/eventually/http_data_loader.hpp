@@ -21,7 +21,7 @@ namespace eventually {
         bool _delete_client;
         request_create _request_create;
 
-        data_ptr when_sent(connection& c, http_response&& resp);
+        data_ptr when_sent(connection& c, http_response resp);
         http_request create_request(const std::string& name);
 
     public:

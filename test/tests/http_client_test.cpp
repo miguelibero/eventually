@@ -17,7 +17,7 @@ TEST(http_client, basic) {
     auto f = client.send(req);
     auto resp = f.get();
 
-    ASSERT_LT(0, resp.get_body().size());
+    ASSERT_LT(0, (int)resp.get_body().size());
     ASSERT_NE(-1, resp.get_body_str().find("headers"));
     ASSERT_EQ(200, resp.get_code());
 }
@@ -31,7 +31,7 @@ TEST(http_client, post) {
     auto f = client.send(req);
     auto resp = f.get();
 
-    ASSERT_LT(0, resp.get_body().size());
+    ASSERT_LT(0, (int)resp.get_body().size());
     ASSERT_NE(-1, resp.get_body_str().find("test_eventually"));
     ASSERT_EQ(200, resp.get_code());
 }
@@ -44,7 +44,7 @@ TEST(http_client, request_headers) {
     auto f = client.send(req);
     auto resp = f.get();
 
-    ASSERT_LT(0, resp.get_body().size());
+	ASSERT_LT(0, (int)resp.get_body().size());
     ASSERT_NE(-1, resp.get_body_str().find("X-Eventually"));
     ASSERT_EQ(200, resp.get_code());
 }
@@ -56,7 +56,7 @@ TEST(http_client, response_headers) {
     auto f = client.send(req);
     auto resp = f.get();
 
-    ASSERT_LT(0, resp.get_headers().size());
+	ASSERT_LT(0, (int)resp.get_headers().size());
     ASSERT_EQ(200, resp.get_code());
     ASSERT_STREQ("application/json", resp.find_header("Content-Type")->second.c_str());
 }

@@ -14,7 +14,7 @@ namespace eventually {
         dispatcher* _dispatcher;
         bool _delete_dispatcher;
 
-        data_ptr load_dispatched(connection& c, const std::string& name);
+        static data_ptr load_dispatched(connection& c, const std::string& name);
 
     public:
 

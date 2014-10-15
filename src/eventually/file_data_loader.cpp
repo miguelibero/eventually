@@ -32,8 +32,17 @@ namespace eventually {
     {
     	data_ptr d(new data());
         size_t s = 0;
-        FILE *f = fopen(name.c_str(), "rb");
-        if (f == NULL) 
+
+		FILE *f = nullptr;
+#ifdef _MSC_VER
+		if(fopen_s(&f, name.c_str(), "rb") != 0)
+		{
+			f = nullptr;
+		}
+#else
+        f = fopen(name.c_str(), "rb");
+#endif
+		if (f == nullptr)
         { 
             throw data_exception("Could not open file.");
         } 
@@ -67,7 +76,7 @@ namespace eventually {
         {
             throw new data_exception("No dispatcher found.");
         }
-        return _dispatcher->dispatch(c, std::bind(&file_data_loader::load_dispatched, this, c, name));
+        return _dispatcher->dispatch(c, std::bind(&file_data_loader::load_dispatched, c, name));
     }
 
 }
