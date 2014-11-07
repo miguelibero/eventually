@@ -234,7 +234,7 @@ namespace eventually {
     private:
         when_throw_worker();
     public:
-        template <typename Work, typename Result, typename Exception = std::exception,
+        template <typename Exception = std::exception, typename Work, typename Result,
         typename std::enable_if<is_callable<Work(const Exception&)>::value, int>::type = 0>
         static auto work(Work& w, std::future<Result>& f) -> Result
         {
@@ -249,7 +249,7 @@ namespace eventually {
             }
         }
 
-        template <typename Work, typename Exception = std::exception,
+        template <typename Exception = std::exception, typename Work,
         typename std::enable_if<is_callable<Work(const Exception&)>::value, int>::type = 0>
         static auto work(Work& w, std::future<void>& f) -> void
         {

@@ -87,20 +87,20 @@ namespace eventually {
          * @param future to wait for
          * @result future for this task
          */         
-        template <typename Work, typename Result, typename Exception = std::exception,
+        template <typename Exception = std::exception, typename Work, typename Result,
             typename std::enable_if<is_callable<Work(const Exception&)>::value, int>::type = 0>
         auto when_throw(Work&& w, std::future<Result>&& f) NOEXCEPT -> std::future<Result>
         {
             connection c;
-            return when_throw(c, std::forward<Work>(w), std::move(f));
+            return when_throw<Exception>(c, std::forward<Work>(w), std::move(f));
         }
 
-        template <typename Work, typename Result, typename Exception = std::exception,
+        template <typename Exception = std::exception, typename Work, typename Result,
             typename std::enable_if<is_callable<Work(const Exception&)>::value, int>::type = 0>
         auto when_throw(connection& c, Work&& w, std::future<Result>&& f) NOEXCEPT -> std::future<Result>
         {
             return dispatch(c, [w](std::future<Result>&& f) mutable {
-                return when_throw_worker::work(w, f);
+                return when_throw_worker::work<Exception>(w, f);
             }, std::move(f));
         }
 

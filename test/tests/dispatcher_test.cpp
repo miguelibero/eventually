@@ -4,6 +4,10 @@
 using namespace eventually;
 using namespace std::placeholders;
 
+class test_exception : public std::exception
+{
+};
+
 TEST(dispatcher, process_one) {
 
     dispatcher d;
@@ -139,6 +143,32 @@ TEST(dispatcher, when_throw) {
     ASSERT_TRUE(thrown);
 }
 
+TEST(dispatcher, when_throw_exception) {
+
+    dispatcher d;
+    bool thrown = false;
+    d.when_throw<test_exception>([&thrown](const test_exception& e){
+        thrown = true;
+    }, d.dispatch([](){
+        throw test_exception();
+        return 0;
+    }));
+    d.process_all();
+
+    ASSERT_TRUE(thrown);
+
+    thrown = false;
+    d.when_throw<test_exception>([&thrown](const test_exception& e){
+        thrown = true;
+    }, d.dispatch([](){
+        throw std::exception();
+        return 0;
+    }));
+    d.process_all();
+
+    ASSERT_FALSE(thrown);    
+}
+
 
 TEST(dispatcher, when_throw_continue) {
 
@@ -153,9 +183,7 @@ TEST(dispatcher, when_throw_continue) {
         return 0;
     })));
 
-    d.process_one();
-    d.process_one();
-    d.process_one();
+    d.process_all();
     
     ASSERT_FLOAT_EQ(4.0f, f.get());
 }
@@ -172,9 +200,7 @@ TEST(dispatcher, when_throw_no_exception) {
         return 3;
     })));
 
-    d.process_one();
-    d.process_one();
-    d.process_one();
+    d.process_all();
     
     ASSERT_FLOAT_EQ(6.0f, f.get());
 }
