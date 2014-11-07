@@ -4,6 +4,10 @@
 using namespace eventually;
 using namespace std::placeholders;
 
+class test_exception : public std::exception
+{
+};
+
 TEST(dispatcher, process_one) {
 
     dispatcher d;
@@ -111,19 +115,75 @@ TEST(dispatcher, when_combined) {
 TEST(dispatcher, when_throw) {
 
     dispatcher d;
+    bool thrown = false;
 
     auto f = d.when([](int c){
         return 2.0f*c ;
-    }, d.when_throw([](const std::exception& e){
+    }, d.when_throw([&thrown](const std::exception& e){
+        thrown = true;
+    }, d.dispatch([](){
+        throw std::exception();
+        return 0;
+    })));
+
+    d.process_all();
+
+    ASSERT_TRUE(thrown);
+
+    thrown = false;
+    try
+    {
+        f.get();
+    }
+    catch(...)
+    {
+        thrown = true;
+    }
+
+    ASSERT_TRUE(thrown);
+}
+
+TEST(dispatcher, when_throw_exception) {
+
+    dispatcher d;
+    bool thrown = false;
+    d.when_throw<test_exception>([&thrown](const test_exception& e){
+        thrown = true;
+    }, d.dispatch([](){
+        throw test_exception();
+        return 0;
+    }));
+    d.process_all();
+
+    ASSERT_TRUE(thrown);
+
+    thrown = false;
+    d.when_throw<test_exception>([&thrown](const test_exception& e){
+        thrown = true;
+    }, d.dispatch([](){
+        throw std::exception();
+        return 0;
+    }));
+    d.process_all();
+
+    ASSERT_FALSE(thrown);    
+}
+
+
+TEST(dispatcher, when_throw_continue) {
+
+    dispatcher d;
+
+    auto f = d.when([](int c){
+        return 2.0f*c ;
+    }, d.when_throw_continue([](const std::exception& e){
         return 2;
     }, d.dispatch([](){
         throw std::exception();
         return 0;
     })));
 
-    d.process_one();
-    d.process_one();
-    d.process_one();
+    d.process_all();
     
     ASSERT_FLOAT_EQ(4.0f, f.get());
 }
@@ -140,9 +200,7 @@ TEST(dispatcher, when_throw_no_exception) {
         return 3;
     })));
 
-    d.process_one();
-    d.process_one();
-    d.process_one();
+    d.process_all();
     
     ASSERT_FLOAT_EQ(6.0f, f.get());
 }
