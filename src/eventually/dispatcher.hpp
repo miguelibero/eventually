@@ -86,9 +86,9 @@ namespace eventually {
          * @param work function that accepts the exception as a parameter         
          * @param future to wait for
          * @result future for this task
-         */
+         */         
         template <typename Work, typename Result, typename Exception = std::exception,
-            typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
+            typename std::enable_if<is_callable<Work(const Exception&)>::value, int>::type = 0>
         auto when_throw(Work&& w, std::future<Result>&& f) NOEXCEPT -> std::future<Result>
         {
             connection c;
@@ -96,13 +96,38 @@ namespace eventually {
         }
 
         template <typename Work, typename Result, typename Exception = std::exception,
-            typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
+            typename std::enable_if<is_callable<Work(const Exception&)>::value, int>::type = 0>
         auto when_throw(connection& c, Work&& w, std::future<Result>&& f) NOEXCEPT -> std::future<Result>
         {
             return dispatch(c, [w](std::future<Result>&& f) mutable {
                 return when_throw_worker::work(w, f);
             }, std::move(f));
         }
+
+        /**
+         * Call a function when a future throws an exception,
+         * returning a value so that the chain can continue.
+         * Can be used to react to asyncronous exception
+         * @param work function that accepts the exception as a parameter and returns a result
+         * @param future to wait for
+         * @result future for this task
+         */
+        template <typename Work, typename Result, typename Exception = std::exception,
+            typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
+        auto when_throw_continue(Work&& w, std::future<Result>&& f) NOEXCEPT -> std::future<Result>
+        {
+            connection c;
+            return when_throw_continue(c, std::forward<Work>(w), std::move(f));
+        }
+
+        template <typename Work, typename Result, typename Exception = std::exception,
+            typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
+        auto when_throw_continue(connection& c, Work&& w, std::future<Result>&& f) NOEXCEPT -> std::future<Result>
+        {
+            return dispatch(c, [w](std::future<Result>&& f) mutable {
+                return when_throw_continue_worker::work(w, f);
+            }, std::move(f));
+        }            
 
         /**
          * Call a function when a a list of futures are met

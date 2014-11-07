@@ -233,6 +233,46 @@ namespace eventually {
     {
     private:
         when_throw_worker();
+    public:
+        template <typename Work, typename Result, typename Exception = std::exception,
+        typename std::enable_if<is_callable<Work(const Exception&)>::value, int>::type = 0>
+        static auto work(Work& w, std::future<Result>& f) -> Result
+        {
+            try
+            {
+                return f.get();
+            }
+            catch(const Exception& e)
+            {
+                w(e);
+                throw e;
+            }
+        }
+
+        template <typename Work, typename Exception = std::exception,
+        typename std::enable_if<is_callable<Work(const Exception&)>::value, int>::type = 0>
+        static auto work(Work& w, std::future<void>& f) -> void
+        {
+            try
+            {
+                f.wait();
+            }
+            catch(const Exception& e)
+            {
+                w(e);
+                throw e;
+            }
+        }
+    };
+
+    /**
+     * Used to catch an exception when getting a future
+     * and return a default value
+     */
+    class when_throw_continue_worker
+    {
+    private:
+        when_throw_continue_worker();
     public:        
         template <typename Work, typename Result, typename Exception = std::exception,
             typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>

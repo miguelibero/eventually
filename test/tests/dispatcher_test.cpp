@@ -111,10 +111,42 @@ TEST(dispatcher, when_combined) {
 TEST(dispatcher, when_throw) {
 
     dispatcher d;
+    bool thrown = false;
 
     auto f = d.when([](int c){
         return 2.0f*c ;
-    }, d.when_throw([](const std::exception& e){
+    }, d.when_throw([&thrown](const std::exception& e){
+        thrown = true;
+    }, d.dispatch([](){
+        throw std::exception();
+        return 0;
+    })));
+
+    d.process_all();
+
+    ASSERT_TRUE(thrown);
+
+    thrown = false;
+    try
+    {
+        f.get();
+    }
+    catch(...)
+    {
+        thrown = true;
+    }
+
+    ASSERT_TRUE(thrown);
+}
+
+
+TEST(dispatcher, when_throw_continue) {
+
+    dispatcher d;
+
+    auto f = d.when([](int c){
+        return 2.0f*c ;
+    }, d.when_throw_continue([](const std::exception& e){
         return 2;
     }, d.dispatch([](){
         throw std::exception();
