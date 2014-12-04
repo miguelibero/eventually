@@ -8,7 +8,8 @@ using namespace eventually;
 
 TEST(task, basic) {
 
-    task<int> t([](){
+    connection c;
+    auto t = make_task(c, [](){
         return 4;
     });
 
@@ -32,7 +33,7 @@ TEST(task, make_task_ptr) {
 TEST(task, interrupt) {
 
     connection c;
-    task<int> t(c, [](){
+    auto t = make_task(c, [](){
         return 4;
     });
 

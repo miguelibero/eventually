@@ -5,42 +5,46 @@
 #include <eventually/apply.hpp>
 #include <eventually/template_helper.hpp>
 #include <eventually/is_callable.hpp>
-#include <functional>
 
 namespace eventually {
 
     /**
      * Contains a function object and its parameters
      */
-    template <typename Result, typename... Args>
+    template <typename... Args>
     class handler
     {
     private:
-        std::function<Result(Args...)> _work;
         mutable std::tuple<Args...> _args;
 
     public:
 
-        template <typename Work, typename std::enable_if<is_callable_with_result<Work(Args...), Result>::value, int>::type = 0>
-        handler(Work&& w, Args&&... args)
-            : _work(std::forward<Work>(w)),
-              _args(std::forward<Args>(args)...)
+        handler(Args&&... args):
+            _args(std::forward<Args>(args)...)
         {
         }
 
-        Result operator()() const
+        template <typename Work,
+            typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
+        typename result_of<Work(Args&&...)>::type operator()(Work&& w) const
         {
-            return apply(_work, std::move(_args));
+            return apply(w, std::move(_args));
         }
+
+        /*
+        template <typename Work,
+            typename std::enable_if<is_callable<Work(Args&...)>::value, int>::type = 0>
+        typename result_of<Work(Args&...)>::type operator()(Work&& w) const
+        {
+            return apply(w, _args);
+        }
+        */
     };
 
-    template <typename Work, typename... Args>
-    using work_handler = handler<typename result_of<Work(Args...)>::type, Args...>;
-
-    template <typename Work, typename... Args>
-    auto make_handler(Work&& w, Args&&... args) -> work_handler<Work, Args...>
+    template <typename... Args>
+    handler<Args...> make_handler(Args&&... args)
     {
-        return work_handler<Work, Args...>(std::forward<Work>(w), std::forward<Args>(args)...);
+        return handler<Args...>(std::forward<Args>(args)...);
     }
 
 }
