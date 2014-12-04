@@ -38,24 +38,51 @@ namespace eventually {
          * @param work function
          * @param args additional arguments
          */
-        template<typename Work, typename... Args, typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
+        template<typename Work, typename... Args,
+            typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
         auto dispatch(Work&& w, Args&&... args) NOEXCEPT -> std::future<decltype(w(std::forward<Args>(args)...))>
         {
             connection c;
             return dispatch(c, std::forward<Work>(w), std::forward<Args>(args)...);
         }
 
-        template<typename Work, typename... Args, typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
+        template<typename Work, typename... Args,
+            typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
         auto dispatch(connection& c, Work&& w, Args&&... args) NOEXCEPT -> std::future<decltype(w(std::forward<Args>(args)...))>
         {
+            return dispatch_retry(c, [](Args&... args){
+                return true;
+            }, std::forward<Work>(w), std::forward<Args>(args)...);
+        }
+
+
+        /**
+         * Do work in the future with a ready function
+         * @param connection that is used to interrupt the work
+         * @param retry function (return true when ready)
+         * @param work function
+         * @param args additional arguments
+         */
+        template<typename Retry, typename Work, typename... Args,
+            typename std::enable_if<is_callable<Retry(Args&...)>::value, int>::type = 0,
+            typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
+        auto dispatch_retry(Retry&& r, Work&& w, Args&&... args) NOEXCEPT -> std::future<decltype(w(std::forward<Args>(args)...))>
+        {
+            connection c;
+            return dispatch_retry(c, std::forward<Retry>(r), std::forward<Work>(w), std::forward<Args>(args)...);
+        }
+
+        template<typename Retry, typename Work, typename... Args,
+            typename std::enable_if<is_callable<Retry(Args&...)>::value, int>::type = 0,
+            typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
+        auto dispatch_retry(connection& c, Retry&& r, Work&& w, Args&&... args) NOEXCEPT -> std::future<decltype(w(std::forward<Args>(args)...))>
+        {
             auto t = make_task_ptr(c, std::forward<Work>(w), std::forward<Args>(args)...);
-            auto future_ = t->get_future();
-            {
-                std::lock_guard<std::mutex> lock_(_mutex);
-                _tasks.push_back(std::move(t));
-            }
+            auto f = t->get_future();
+            std::lock_guard<std::mutex> lock_(_mutex);
+            _tasks.push_back(std::move(t));
             _new_task.notify_one();
-            return future_;
+            return f;
         }
 
         /**
