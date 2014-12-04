@@ -16,7 +16,7 @@ namespace eventually {
     struct connection_data
     {
         std::atomic_bool _interrupt_flag;
-        std::mutex _work_mutex;
+        std::mutex _mutex;
 
         connection_data();
         void interrupt() NOEXCEPT;
@@ -44,14 +44,7 @@ namespace eventually {
         virtual ~connection();
         void interrupt() NOEXCEPT;
         void interruption_point();
-
-        template <typename Work>
-        auto work(Work&& w) -> decltype(w())
-        {
-            std::lock_guard<std::mutex> lock_(_data->_work_mutex);
-            interruption_point();
-            return w();
-        }
+        std::mutex& get_mutex() NOEXCEPT;
     };
 
     /**

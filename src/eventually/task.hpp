@@ -63,6 +63,7 @@ namespace eventually {
 
         void operator()()
         {
+            _handler(_work, _connection, _promise);
         }
 
     };
