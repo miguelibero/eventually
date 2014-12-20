@@ -48,6 +48,27 @@ namespace eventually {
             work(w, fs...);
             p.set_value();
         }
+
+        template <typename Result, typename... Results>
+        static bool is_ready(const std::future<Result>& f, const std::future<Results>&... fs)
+        {
+            if(!is_ready(f))
+            {
+                return false;
+            }
+            return is_ready(fs...);
+        }
+
+        template <typename Result>
+        static bool is_ready(const std::future<Result>& f)
+        {
+            if(f.valid() == false)
+            {
+                return true;
+            }
+            return f.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready;
+        }
+
     };
 
     template<typename FinalResult>

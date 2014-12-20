@@ -38,24 +38,79 @@ namespace eventually {
          * @param work function
          * @param args additional arguments
          */
-        template<typename Work, typename... Args, typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
+        template<typename Work, typename... Args,
+            typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
         auto dispatch(Work&& w, Args&&... args) NOEXCEPT -> std::future<decltype(w(std::forward<Args>(args)...))>
         {
             connection c;
             return dispatch(c, std::forward<Work>(w), std::forward<Args>(args)...);
         }
 
-        template<typename Work, typename... Args, typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
+        template<typename Work, typename... Args,
+            typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
         auto dispatch(connection& c, Work&& w, Args&&... args) NOEXCEPT -> std::future<decltype(w(std::forward<Args>(args)...))>
         {
-            auto t = make_task_ptr(c, std::forward<Work>(w), std::forward<Args>(args)...);
-            auto future_ = t->get_future();
-            {
-                std::lock_guard<std::mutex> lock_(_mutex);
-                _tasks.push_back(std::move(t));
-            }
+            return dispatch_retry(c, [](Args&... args){
+                return true;
+            }, std::forward<Work>(w), std::forward<Args>(args)...);
+        }
+
+
+        /**
+         * Do work in the future with a ready function
+         * @param connection that is used to interrupt the work
+         * @param retry function (return true when ready)
+         * @param work function
+         * @param args additional arguments
+         */
+        template<typename Retry, typename Work, typename... Args,
+            typename std::enable_if<is_callable<Retry(Args&...)>::value, int>::type = 0,
+            typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
+        auto dispatch_retry(Retry&& r, Work&& w, Args&&... args) NOEXCEPT
+            -> std::future<decltype(w(std::forward<Args>(args)...))>
+        {
+            connection c;
+            return dispatch_retry(c, std::forward<Retry>(r), std::forward<Work>(w), std::forward<Args>(args)...);
+        }
+
+        template<typename Retry, typename Work, typename... Args,
+            typename std::enable_if<is_callable<Retry(Args&...)>::value, int>::type = 0,
+            typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
+        auto dispatch_retry(connection& c, Retry&& r, Work&& w, Args&&... args) NOEXCEPT
+            -> std::future<decltype(w(std::forward<Args>(args)...))>
+        {
+            auto t = make_task_ptr(c, std::forward<Retry>(r), std::forward<Work>(w), std::forward<Args>(args)...);
+            auto f = t->get_future();
+            std::lock_guard<std::mutex> lock_(_mutex);
+            _tasks.push_back(std::move(t));
             _new_task.notify_one();
-            return future_;
+            return f;
+        }
+
+        /**
+         * Do work in the future checking if futures are ready
+         * @param connection that is used to interrupt the work
+         * @param work function
+         * @param args additional arguments
+         */
+        template <typename Work, typename... Results,
+            typename std::enable_if<is_callable<Work(std::future<Results>&&...)>::value, int>::type = 0>
+        auto dispatch_future(Work&& w, std::future<Results>&&... fs) NOEXCEPT
+            -> std::future<decltype(w(std::move(fs)...))>
+        {
+            connection c;
+            return dispatch_future(c, std::forward<Work>(w), std::move(fs)...);
+        }
+
+        template <typename Work, typename... Results,
+            typename std::enable_if<is_callable<Work(std::future<Results>&&...)>::value, int>::type = 0>
+        auto dispatch_future(connection& c, Work&& w, std::future<Results>&&... fs) NOEXCEPT
+            -> std::future<decltype(w(std::move(fs)...))>
+        {
+            return dispatch_retry(c, [](std::future<Results>&... fs){
+                    return true;
+                },
+                std::forward<Work>(w), std::move(fs)...);
         }
 
         /**
@@ -75,9 +130,11 @@ namespace eventually {
         template <typename Work, typename Result, typename std::enable_if<is_callable<Work(Result)>::value, int>::type = 0>
         auto when(connection& c, Work&& w, std::future<Result>&& f) NOEXCEPT -> std::future<decltype(w(f.get()))>
         {
-            return dispatch(c, [w](std::future<Result>&& f) mutable {
-                return when_worker::work(w, f);
-            }, std::move(f));
+            return dispatch_future(c,
+                [w](std::future<Result>&& f) mutable {
+                    return when_worker::work(w, f);
+                },
+            std::move(f));
         }
 
         /**
@@ -99,9 +156,11 @@ namespace eventually {
             typename std::enable_if<is_callable<Work(const Exception&)>::value, int>::type = 0>
         auto when_throw(connection& c, Work&& w, std::future<Result>&& f) NOEXCEPT -> std::future<Result>
         {
-            return dispatch(c, [w](std::future<Result>&& f) mutable {
-                return when_throw_worker::work<Exception>(w, f);
-            }, std::move(f));
+            return dispatch_future(c,
+                [w](std::future<Result>&& f) mutable {
+                    return when_throw_worker::work<Exception>(w, f);
+                },
+            std::move(f));
         }
 
         /**
@@ -124,9 +183,11 @@ namespace eventually {
             typename std::enable_if<is_callable_with_result<Work(const Exception&), Result>::value, int>::type = 0>
         auto when_throw_continue(connection& c, Work&& w, std::future<Result>&& f) NOEXCEPT -> std::future<Result>
         {
-            return dispatch(c, [w](std::future<Result>&& f) mutable {
-                return when_throw_continue_worker::work(w, f);
-            }, std::move(f));
+            return dispatch_future(c,
+                [w](std::future<Result>&& f) mutable {
+                    return when_throw_continue_worker::work(w, f);
+                },
+            std::move(f));
         }            
 
         /**
@@ -147,9 +208,11 @@ namespace eventually {
             typename std::enable_if<is_callable<Work(Results...)>::value, int>::type = 0>
         auto when_all(connection& c, Work&& w, std::future<Results>&&... f) NOEXCEPT -> std::future<decltype(w(f.get()...))>
         {
-            return dispatch(c, [w](std::future<Results>&&... f) mutable {
-                return when_worker::work(w, f...);
-            }, std::move(f)...);
+            return dispatch_future(c,
+                [w](std::future<Results>&&... f) mutable {
+                    return when_worker::work(w, f...);
+                },
+            std::move(f)...);
         }
 
         template <typename... Results>
@@ -196,9 +259,11 @@ namespace eventually {
             typename std::enable_if<is_callable_with_result<Work(Result), FinalResult>::value, int>::type = 0>
         void when_any(Work&& w, when_any_worker<FinalResult> p, std::future<Result> f) NOEXCEPT
         {
-            dispatch([w, p](std::future<Result>&& f) mutable {
-                return p.work(w, f);
-            }, std::move(f));
+            dispatch_future(
+                [w, p](std::future<Result>&& f) mutable {
+                    return p.work(w, f);
+                },
+            std::move(f));
         }
 
         template <typename Work, typename Result, typename... Results,
@@ -237,7 +302,7 @@ namespace eventually {
             typename std::enable_if<is_callable_with_result<Work(), FinalResult>::value, int>::type = 0>
         void when_any(Work&& w, when_any_worker<FinalResult> p, std::future<Result> f) NOEXCEPT
         {
-            dispatch([w, p](std::future<Result>&& f) mutable {
+            dispatch_future([w, p](std::future<Result>&& f) mutable {
                 return p.work(w, f);
             }, std::move(f));
         }        
@@ -282,9 +347,11 @@ namespace eventually {
             typename std::enable_if<is_callable<Work(when_every_container<Result>&)>::value, int>::type = 0>
         void when_every(Work&& w, when_every_worker<Result> p, std::future<Result> f) NOEXCEPT
         {
-            dispatch([w, p](std::future<Result>&& f) mutable {
-                return p.work(w, f);
-            }, std::move(f));
+            dispatch_future(
+                [w, p](std::future<Result>&& f) mutable {
+                    return p.work(w, f);
+                },
+            std::move(f));
         }
 
         template <typename Work, typename Result, typename... Results,

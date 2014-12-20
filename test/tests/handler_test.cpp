@@ -1,7 +1,6 @@
 
 #include <eventually/handler.hpp>
-#include <functional>
-#include <memory>
+#include <future>
 #include "gtest/gtest.h"
 
 using namespace eventually;
@@ -9,48 +8,71 @@ using namespace eventually;
 
 TEST(handler, basic) {
 
-    handler<int> h([](){
-        return 4;
-    });
+    handler<> h;
+    connection c;
+    std::promise<int> p;
+    auto f = p.get_future();
 
-    ASSERT_EQ(4, h());
+    h([](){
+        return 4;
+    }, c, p);
+
+    ASSERT_EQ(4, f.get());
 }
 
 TEST(handler, make) {
 
-    auto h = make_handler([](){
-        return 4;
-    });
+    auto h = make_handler();
+    connection c;
+    std::promise<int> p;
+    auto f = p.get_future();    
 
-    ASSERT_EQ(4, h());
+    h([](){
+        return 4;
+    }, c, p);
+
+    ASSERT_EQ(4, f.get());
 }
 
 TEST(handler, arguments) {
 
-    handler<int, int, int> h([](int a, int b){
-        return a+b;
-    }, 2, 3);
+    handler<int, int> h(2, 3);
+    connection c;
+    std::promise<int> p;
+    auto f = p.get_future();
 
-    ASSERT_EQ(5, h());
+    h([](int a, int b){
+        return a+b;
+    }, c, p);    
+
+    ASSERT_EQ(5, f.get());
 }
 
 TEST(handler, make_arguments) {
 
-    auto h = make_handler([](int a, int b){
+    auto h = make_handler(2, 3);
+    connection c;
+    std::promise<int> p;
+    auto f = p.get_future();
+
+    h([](int a, int b){
         return a+b;
-    }, 2, 3);
+    }, c, p);
 
-    ASSERT_EQ(5, h());
+    ASSERT_EQ(5, f.get());
 }
-
 
 TEST(handler, unique_ptr) {
 
-    std::unique_ptr<int> p(new int(5));
+    std::unique_ptr<int> ptr(new int(5));
+    auto h = make_handler(std::move(ptr));
+    connection c;
+    std::promise<int> p;
+    auto f = p.get_future();
 
-    auto h = make_handler([](std::unique_ptr<int> ptr){
+    h([](std::unique_ptr<int> ptr){
         return *ptr;
-    }, std::move(p));
+    }, c, p);
 
-    ASSERT_EQ(5, h());
+    ASSERT_EQ(5, f.get());
 }

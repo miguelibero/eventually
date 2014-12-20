@@ -43,18 +43,23 @@ TEST(thread_dispatcher, when_combined) {
     ASSERT_FLOAT_EQ(10.0f, future.get());
 }
 
-TEST(dispatcher, connection_interrupt) {
+TEST(thread_dispatcher, connection_interrupt) {
 
     thread_dispatcher d;
     connection c;
-
     bool done = false;
-    d.dispatch(c, [c, &done]() mutable {
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        c.interruption_point();
-        done = true;
-    });
-    c.interrupt();
+    std::atomic<bool> interrupted;
+    interrupted.store(false);
+    {
+        d.dispatch_retry(c, [&interrupted] {
+            return interrupted.load();
+        }, [c, &done]() mutable {
+            c.interruption_point();
+            done = true;
+        });
+        c.interrupt();
+        interrupted.store(true);
+    }
 
     ASSERT_FALSE(done);
 }

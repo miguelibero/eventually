@@ -5,42 +5,76 @@
 #include <eventually/apply.hpp>
 #include <eventually/template_helper.hpp>
 #include <eventually/is_callable.hpp>
-#include <functional>
+#include <eventually/connection.hpp>
+#include <future>
 
 namespace eventually {
 
     /**
-     * Contains a function object and its parameters
+     * Contains a tuple parameters
+     * you can pass function objects and promises to fullfill
      */
-    template <typename Result, typename... Args>
+    template <typename... Args>
     class handler
     {
     private:
-        std::function<Result(Args...)> _work;
         mutable std::tuple<Args...> _args;
 
     public:
 
-        template <typename Work, typename std::enable_if<is_callable_with_result<Work(Args...), Result>::value, int>::type = 0>
-        handler(Work&& w, Args&&... args)
-            : _work(std::forward<Work>(w)),
-              _args(std::forward<Args>(args)...)
+        handler(Args&&... args):
+            _args(std::forward<Args>(args)...)
         {
         }
 
-        Result operator()() const
+        template <typename Work, typename Result,
+            typename std::enable_if<is_callable_with_result<Work(Args&&...), Result>::value, int>::type = 0>
+        void operator()(Work&& w, connection& c, std::promise<Result>& p) const NOEXCEPT
         {
-            return apply(_work, std::move(_args));
+            std::lock_guard<std::mutex> lock(c.get_mutex());
+            try
+            {
+                c.interruption_point();
+                p.set_value(apply(w, std::move(_args)));
+            }
+            catch(...)
+            {
+                p.set_exception(std::current_exception());
+            }
         }
+
+        template <typename Work,
+            typename std::enable_if<is_callable_with_result<Work(Args&&...), void>::value, int>::type = 0>
+        void operator()(Work&& w, connection& c, std::promise<void>& p) const NOEXCEPT
+        {
+            std::lock_guard<std::mutex> lock(c.get_mutex());
+            try
+            {
+                c.interruption_point();
+                apply(w, std::move(_args));
+                p.set_value();
+            }
+            catch(...)
+            {
+                p.set_exception(std::current_exception());
+            }                
+        }
+
+
+        template <typename Retry,
+            typename std::enable_if<is_callable_with_result<Retry(Args&...), bool>::value, int>::type = 0>
+        bool operator()(Retry&& r, connection& c) const NOEXCEPT
+        {
+            std::lock_guard<std::mutex> lock(c.get_mutex());
+            return apply(r, _args);
+        }
+
     };
 
-    template <typename Work, typename... Args>
-    using work_handler = handler<typename result_of<Work(Args...)>::type, Args...>;
-
-    template <typename Work, typename... Args>
-    auto make_handler(Work&& w, Args&&... args) -> work_handler<Work, Args...>
+    template <typename... Args>
+    handler<Args...> make_handler(Args&&... args)
     {
-        return work_handler<Work, Args...>(std::forward<Work>(w), std::forward<Args>(args)...);
+        return handler<Args...>(std::forward<Args>(args)...);
     }
 
 }

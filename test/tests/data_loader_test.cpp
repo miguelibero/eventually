@@ -60,6 +60,7 @@ TEST(data_loader, http) {
 TEST(data_loader, README) {
 
 	std::atomic<size_t> size;
+	size.store(-1);
 	file_data_loader loader;
 	connection conn;
 
@@ -71,5 +72,5 @@ TEST(data_loader, README) {
 	}, loader.load(conn, "/etc/magic"));
 	while(block.load()){};
 
-	ASSERT_LT(0, (int)size.load());
+	ASSERT_LT((size_t)0, size.load());
 }

@@ -34,6 +34,7 @@ namespace eventually {
 
     connection::~connection()
     {
+        std::lock_guard<std::mutex> lock(get_mutex());
     }
 
     void connection::interrupt() NOEXCEPT
@@ -44,6 +45,11 @@ namespace eventually {
     void connection::interruption_point()
     {
         _data->interruption_point();
+    }
+
+    std::mutex& connection::get_mutex() NOEXCEPT
+    {
+        return _data->_mutex;
     }
 
     scoped_connection::~scoped_connection()

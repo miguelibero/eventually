@@ -20,18 +20,17 @@ namespace eventually {
 
     bool dispatcher::process_one() NOEXCEPT
     {
-        basic_task_ptr task_;
+        std::lock_guard<std::mutex> lock_(_mutex);
+        if(!_tasks.empty())
         {
-            std::lock_guard<std::mutex> lock_(_mutex);
-            if(_tasks.empty())
+            basic_task_ptr& task_ = _tasks.front();
+            if((*task_)())
             {
-                return false;
+                _tasks.pop_front();
+                return true;
             }
-            task_ = std::move(_tasks.front());
-            _tasks.pop_front();
         }
-        (*task_)();
-        return true;
+        return false;
     }
 
 }
