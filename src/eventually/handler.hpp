@@ -27,13 +27,6 @@ namespace eventually {
         {
         }
 
-        template <typename Work,
-            typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
-        typename result_of<Work(Args&&...)>::type operator()(Work&& w) const
-        {
-            return apply(w, std::move(_args));
-        }
-
         template <typename Work, typename Result,
             typename std::enable_if<is_callable_with_result<Work(Args&&...), Result>::value, int>::type = 0>
         void operator()(Work&& w, connection& c, std::promise<Result>& p) const NOEXCEPT
@@ -42,14 +35,13 @@ namespace eventually {
             try
             {
                 c.interruption_point();
-                p.set_value((*this)(w));
+                p.set_value(apply(w, std::move(_args)));
             }
             catch(...)
             {
                 p.set_exception(std::current_exception());
             }
         }
-
 
         template <typename Work,
             typename std::enable_if<is_callable_with_result<Work(Args&&...), void>::value, int>::type = 0>
@@ -59,7 +51,7 @@ namespace eventually {
             try
             {
                 c.interruption_point();
-                (*this)(w);
+                apply(w, std::move(_args));
                 p.set_value();
             }
             catch(...)
@@ -68,14 +60,15 @@ namespace eventually {
             }                
         }
 
-        /*
-        template <typename Work,
-            typename std::enable_if<is_callable<Work(Args&...)>::value, int>::type = 0>
-        typename result_of<Work(Args&...)>::type operator()(Work&& w) const
+
+        template <typename Retry,
+            typename std::enable_if<is_callable_with_result<Retry(Args&...), bool>::value, int>::type = 0>
+        bool operator()(Retry&& r, connection& c) const NOEXCEPT
         {
-            return apply(w, _args);
+            std::lock_guard<std::mutex> lock(c.get_mutex());
+            return apply(r, _args);
         }
-        */
+
     };
 
     template <typename... Args>

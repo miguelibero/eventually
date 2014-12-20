@@ -9,21 +9,31 @@ using namespace eventually;
 TEST(task, basic) {
 
     connection c;
-    auto t = make_task(c, [](){
-        return 4;
-    });
+    auto t = make_task(c,
+        [](){
+            return true;
+        },
+        [](){
+            return 4;
+        });
 
     t();
 
     ASSERT_EQ(4, t.get_future().get());
 }
 
+
 TEST(task, make_task_ptr) {
 
     connection c;
-    auto t = make_task_ptr(c, [](int a, int b){
-        return a+b;
-    }, 2, 3);
+    auto t = make_task_ptr(c,
+        [](int a, int b){
+            return true;
+        },
+        [](int a, int b){
+            return a+b;
+        },
+    2, 3);
 
     (*t)();
 
@@ -33,9 +43,13 @@ TEST(task, make_task_ptr) {
 TEST(task, interrupt) {
 
     connection c;
-    auto t = make_task(c, [](){
-        return 4;
-    });
+    auto t = make_task(c,
+        [](){
+            return true;
+        },
+        [](){
+            return 4;
+        });
 
     c.interrupt();
     t();
@@ -57,9 +71,14 @@ TEST(task, unique_ptr) {
 
     std::unique_ptr<int> p(new int(5));
     connection c;
-    auto t = make_task_ptr(c, [](std::unique_ptr<int> p){
-        return *p;
-    }, std::move(p));
+    auto t = make_task_ptr(c,
+        [](std::unique_ptr<int>& p){
+            return true;
+        },
+        [](std::unique_ptr<int> p){
+            return *p;
+        },
+    std::move(p));
 
     (*t)();
 

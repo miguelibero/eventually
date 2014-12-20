@@ -77,7 +77,7 @@ namespace eventually {
             typename std::enable_if<is_callable<Work(Args&&...)>::value, int>::type = 0>
         auto dispatch_retry(connection& c, Retry&& r, Work&& w, Args&&... args) NOEXCEPT -> std::future<decltype(w(std::forward<Args>(args)...))>
         {
-            auto t = make_task_ptr(c, std::forward<Work>(w), std::forward<Args>(args)...);
+            auto t = make_task_ptr(c, std::forward<Retry>(r), std::forward<Work>(w), std::forward<Args>(args)...);
             auto f = t->get_future();
             std::lock_guard<std::mutex> lock_(_mutex);
             _tasks.push_back(std::move(t));
