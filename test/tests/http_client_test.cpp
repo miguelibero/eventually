@@ -18,7 +18,7 @@ TEST(http_client, basic) {
     auto resp = f.get();
 
     ASSERT_LT(0, (int)resp.get_body().size());
-    ASSERT_NE(-1, resp.get_body_str().find("headers"));
+    ASSERT_NE(std::string::npos, resp.get_body_str().find("headers"));
     ASSERT_EQ(200, resp.get_code());
 }
 
@@ -32,7 +32,7 @@ TEST(http_client, post) {
     auto resp = f.get();
 
     ASSERT_LT(0, (int)resp.get_body().size());
-    ASSERT_NE(-1, resp.get_body_str().find("test_eventually"));
+    ASSERT_NE(std::string::npos, resp.get_body_str().find("test_eventually"));
     ASSERT_EQ(200, resp.get_code());
 }
 
@@ -45,7 +45,7 @@ TEST(http_client, request_headers) {
     auto resp = f.get();
 
 	ASSERT_LT(0, (int)resp.get_body().size());
-    ASSERT_NE(-1, resp.get_body_str().find("X-Eventually"));
+    ASSERT_NE(std::string::npos, resp.get_body_str().find("X-Eventually"));
     ASSERT_EQ(200, resp.get_code());
 }
 

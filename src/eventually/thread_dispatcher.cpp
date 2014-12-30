@@ -3,8 +3,19 @@
 
 namespace eventually {
 
+    thread_dispatcher::thread_dispatcher(size_t thread_count):
+    _wait(duration::zero())
+    {
+        init(thread_count);
+    }
+
     thread_dispatcher::thread_dispatcher(const duration& wait, size_t thread_count):
     _wait(wait)
+    {
+        init(thread_count);
+    }
+
+    void thread_dispatcher::init(size_t thread_count)
     {
         _done.store(false);
         try

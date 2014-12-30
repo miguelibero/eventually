@@ -4,19 +4,28 @@
 #include <eventually/connection.hpp>
 #include <eventually/thread_dispatcher.hpp>
 #include <functional>
-#include <cstdio> 
+#include <mutex>
+#include <cstdio>
 
 namespace eventually {
 
-    file_data_loader::file_data_loader(dispatcher* d):
-    _dispatcher(d ? d : new thread_dispatcher()),
-    _delete_dispatcher(true)
+    const size_t file_data_loader::nblock = -1;
+
+    file_data_loader::file_data_loader(size_t block_size):
+    _dispatcher(new thread_dispatcher()),
+    _delete_dispatcher(true), _block_size(block_size)
     {
     }
 
-    file_data_loader::file_data_loader(dispatcher& d):
+    file_data_loader::file_data_loader(dispatcher* d, size_t block_size):
+    _dispatcher(d ? d : new thread_dispatcher()),
+    _delete_dispatcher(true), _block_size(block_size)
+    {
+    }
+
+    file_data_loader::file_data_loader(dispatcher& d, size_t block_size):
     _dispatcher(&d),
-    _delete_dispatcher(false)
+    _delete_dispatcher(false), _block_size(block_size)
     {
     }
 
@@ -28,35 +37,55 @@ namespace eventually {
         }
     }
 
-    data_ptr file_data_loader::load_dispatched(connection& c, const std::string& name)
+    FILE* file_data_loader_start(const std::string& name)
     {
-    	data_ptr d(new data());
-        size_t s = 0;
-
-		FILE *f = nullptr;
+		FILE *fh = nullptr;
 #ifdef _MSC_VER
 		if(fopen_s(&f, name.c_str(), "rb") != 0)
 		{
-			f = nullptr;
+			fh = nullptr;
 		}
 #else
-        f = fopen(name.c_str(), "rb");
+        fh = fopen(name.c_str(), "rb");
 #endif
-		if (f == nullptr)
+		if (fh == nullptr)
         { 
-            throw data_exception("Could not open file.");
-        } 
-        fseek(f, 0, SEEK_END);
-        s = ftell(f);
-        fseek(f, 0, SEEK_SET);
-        d->resize(s);
-        if (s != fread(d->data(), 1, s, f)) 
-        { 
-            fclose(f);
-            throw data_exception("Could not read file.");
-        } 
-        fclose(f);
-    	return d;
+            throw data_exception(std::string("Could not open file '")+name+"'.");
+        }
+        return fh;
+    }
+
+    std::mutex work_mutex;
+
+    bool file_data_loader_work(data_ptr& d, FILE* fh, size_t block_size)
+    {
+        std::lock_guard<std::mutex> lock(work_mutex);
+        uint8_t b;
+        while(block_size!=0)
+        {
+            if (fread(&b, 1, 1, fh) == 0) 
+            {
+                return true;
+            }
+            d->push_back(b);
+            if(block_size != file_data_loader::nblock)
+            {
+                block_size--;
+            }
+        }
+        return false;
+    }
+
+    data_ptr file_data_loader_end(data_ptr&& d, FILE* fh)
+    {
+        fclose(fh);
+        return std::move(d);
+    }
+
+    void file_data_loader_throw(const data_exception& err, FILE* fh)
+    {
+        fclose(fh);
+        throw err;
     }
 
     dispatcher& file_data_loader::get_dispatcher()
@@ -76,7 +105,13 @@ namespace eventually {
         {
             throw new data_exception("No dispatcher found.");
         }
-        return _dispatcher->dispatch(c, std::bind(&file_data_loader::load_dispatched, c, name));
+        FILE* fh = file_data_loader_start(name);
+        return _dispatcher->when_throw<data_exception>(
+            std::bind(&file_data_loader_throw, std::placeholders::_1, fh),
+            _dispatcher->dispatch_retry(c, 
+                std::bind(&file_data_loader_work, std::placeholders::_1, fh, _block_size),
+                std::bind(&file_data_loader_end, std::placeholders::_1, fh),
+                data_ptr(new data())));
     }
 
 }

@@ -27,8 +27,8 @@ namespace eventually {
             if((*task_)())
             {
                 _tasks.pop_front();
-                return true;
             }
+            return true;
         }
         return false;
     }
