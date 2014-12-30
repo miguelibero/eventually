@@ -4,6 +4,7 @@
 #include <eventually/setup_data_loader.hpp>
 #include <eventually/http_data_loader.hpp>
 #include <eventually/dispatcher.hpp>
+#include <eventually/thread_dispatcher.hpp>
 #include <eventually/connection.hpp>
 #include <functional>
 #include "gtest/gtest.h"
@@ -14,6 +15,18 @@ using namespace eventually;
 TEST(data_loader, file) {
 
 	file_data_loader loader;
+
+	auto f = loader.load("README.md");
+	auto data = f.get();
+	ASSERT_LT(0, (int)data->size());
+
+	std::string str(data->begin(), data->end());
+	ASSERT_NE(std::string::npos, str.find("Anthony Williams"));
+}
+
+TEST(data_loader, file_in_blocks) {
+
+	file_data_loader loader(1);
 
 	auto f = loader.load("README.md");
 	auto data = f.get();

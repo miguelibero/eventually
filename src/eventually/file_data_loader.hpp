@@ -13,13 +13,14 @@ namespace eventually {
     private:
         dispatcher* _dispatcher;
         bool _delete_dispatcher;
-
-        static data_ptr load_dispatched(connection& c, const std::string& name);
+        size_t _block_size;
 
     public:
+        static const size_t nblock;
 
-        file_data_loader(dispatcher* d=nullptr);
-        file_data_loader(dispatcher& d);
+        file_data_loader(size_t block);
+        file_data_loader(dispatcher* d=nullptr, size_t block=nblock);
+        file_data_loader(dispatcher& d, size_t block=nblock);
 
         ~file_data_loader();
 
