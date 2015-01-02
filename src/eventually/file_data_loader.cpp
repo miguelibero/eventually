@@ -57,7 +57,7 @@ namespace eventually {
 
     std::mutex work_mutex;
 
-    bool file_data_loader_work(data_ptr& d, FILE* fh, size_t block_size)
+    bool file_data_loader_work(data& d, FILE* fh, size_t block_size)
     {
         std::lock_guard<std::mutex> lock(work_mutex);
         uint8_t b;
@@ -67,7 +67,7 @@ namespace eventually {
             {
                 return true;
             }
-            d->push_back(b);
+            d.push_back(b);
             if(block_size != file_data_loader::nblock)
             {
                 block_size--;
@@ -76,7 +76,7 @@ namespace eventually {
         return false;
     }
 
-    data_ptr file_data_loader_end(data_ptr&& d, FILE* fh)
+    data file_data_loader_end(data&& d, FILE* fh)
     {
         fclose(fh);
         return std::move(d);
@@ -93,13 +93,13 @@ namespace eventually {
     	return *_dispatcher;
     }
 
-    std::future<data_ptr> file_data_loader::load(const std::string& name)
+    std::future<data> file_data_loader::load(const std::string& name)
     {
         connection conn;
         return load(conn, name);
     }
 
-    std::future<data_ptr> file_data_loader::load(connection& c, const std::string& name)
+    std::future<data> file_data_loader::load(connection& c, const std::string& name)
     {
         if(!_dispatcher)
         {
@@ -111,7 +111,7 @@ namespace eventually {
             _dispatcher->dispatch_retry(c, 
                 std::bind(&file_data_loader_work, std::placeholders::_1, fh, _block_size),
                 std::bind(&file_data_loader_end, std::placeholders::_1, fh),
-                data_ptr(new data())));
+                data()));
     }
 
 }

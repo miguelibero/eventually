@@ -25,8 +25,8 @@ namespace eventually {
         ~file_data_loader();
 
         dispatcher& get_dispatcher();
-        std::future<data_ptr> load(connection& c, const std::string& name);
-        std::future<data_ptr> load(const std::string& name);
+        std::future<data> load(connection& c, const std::string& name);
+        std::future<data> load(const std::string& name);
 	};
 }
 

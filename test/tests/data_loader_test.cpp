@@ -18,9 +18,9 @@ TEST(data_loader, file) {
 
 	auto f = loader.load("README.md");
 	auto data = f.get();
-	ASSERT_LT(0, (int)data->size());
+	ASSERT_LT(0, (int)data.size());
 
-	std::string str(data->begin(), data->end());
+	std::string str(data.begin(), data.end());
 	ASSERT_NE(std::string::npos, str.find("Anthony Williams"));
 }
 
@@ -30,9 +30,9 @@ TEST(data_loader, file_in_blocks) {
 
 	auto f = loader.load("README.md");
 	auto data = f.get();
-	ASSERT_LT(0, (int)data->size());
+	ASSERT_LT(0, (int)data.size());
 
-	std::string str(data->begin(), data->end());
+	std::string str(data.begin(), data.end());
 	ASSERT_NE(std::string::npos, str.find("Anthony Williams"));
 }
 
@@ -50,8 +50,8 @@ TEST(data_loader, setup) {
 	});
 	auto f = sloader.load("README");
 	auto data = f.get();
-	ASSERT_EQ(1, (int)data->size());
-	ASSERT_EQ(10, data->at(0));
+	ASSERT_EQ(1, (int)data.size());
+	ASSERT_EQ(10, data[0]);
 }
 
 TEST(data_loader, http) {
@@ -65,8 +65,8 @@ TEST(data_loader, http) {
 
 	auto f = sloader.load("get");
 	auto data = f.get();
-	ASSERT_LT(0, (int)data->size());
-	ASSERT_EQ('{', data->at(0));
+	ASSERT_LT(0, (int)data.size());
+	ASSERT_EQ('{', data[0]);
 }
 
 
@@ -79,9 +79,9 @@ TEST(data_loader, README) {
 
 	std::atomic_bool block;
 	block.store(true);
-	loader.get_dispatcher().when(conn, [&block,&size](std::unique_ptr<std::vector<uint8_t>>&& data){
+	loader.get_dispatcher().when(conn, [&block,&size](data&& data){
 	    block.store(false);
-	    size.store(data->size());
+	    size.store(data.size());
 	}, loader.load(conn, "/etc/magic"));
 	while(block.load()){};
 
