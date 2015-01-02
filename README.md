@@ -200,7 +200,7 @@ prevent from copying it.
 ```c++
 file_data_loader loader;
 connection conn;
-loader.get_dispatcher().when(conn, [](std::unique_ptr<std::vector<uint8_t>>&& data){
+loader.get_dispatcher().when(conn, [](std::vector<uint8_t>&& data){
     // do stuff with the file contents
 }, loader.load(conn, "/etc/magic"));
 ```

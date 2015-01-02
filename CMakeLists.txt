@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 if(MSVC)
     set(CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT} /WX:NO /MTd")
 else()
-	ADD_DEFINITIONS(
+	add_definitions(
 	    -std=c++0x
 	    -Wall
 	    -Wno-unknown-pragmas

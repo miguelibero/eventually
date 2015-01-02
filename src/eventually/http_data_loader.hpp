@@ -21,7 +21,7 @@ namespace eventually {
         bool _delete_client;
         request_create _request_create;
 
-        data_ptr when_sent(connection& c, http_response resp);
+        data when_sent(connection& c, http_response&& resp);
         http_request create_request(const std::string& name);
 
     public:
@@ -34,8 +34,8 @@ namespace eventually {
         void set_request_create(const request_create& create);
         dispatcher& get_dispatcher();
         http_client& get_client();
-        std::future<data_ptr> load(connection& c, const std::string& name);
-        std::future<data_ptr> load(const std::string& name);
+        std::future<data> load(connection& c, const std::string& name);
+        std::future<data> load(const std::string& name);
 	};
 }
 

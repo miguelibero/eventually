@@ -54,7 +54,7 @@ namespace eventually {
             _data_setup = setup;
         }
 
-        std::future<data_ptr> load(connection& c, const std::string& name)
+        std::future<data> load(connection& c, const std::string& name)
         {
             if(!_loader)
             {
@@ -65,16 +65,16 @@ namespace eventually {
             {
                 _name_setup(sname);
             }
-			return _loader->get_dispatcher().when([this](data_ptr&& data){
+			return _loader->get_dispatcher().when([this](data&& data){
 				if(_data_setup)
 				{
-					_data_setup(*data);
+					_data_setup(data);
 				}
 				return std::move(data);
 			}, _loader->load(c, sname));
         }
 
-        std::future<data_ptr> load(const std::string& name)
+        std::future<data> load(const std::string& name)
         {
             connection conn;
             return load(conn, name);

@@ -26,7 +26,6 @@ namespace eventually {
     };
 
     typedef std::vector<uint8_t> data;
-    typedef std::unique_ptr<data> data_ptr;
 
 #ifndef _MSC_VER
 
@@ -37,7 +36,7 @@ namespace eventually {
      */
     template <typename T>
     using can_load_data = std::is_same<
-      decltype(std::declval<T>().load(*(connection*)nullptr, std::string())), std::future<data_ptr>>;
+      decltype(std::declval<T>().load(*(connection*)nullptr, std::string())), std::future<data>>;
 
     /**
      * The type trait to detect a class that has a dispatcher

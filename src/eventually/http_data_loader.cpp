@@ -29,12 +29,9 @@ namespace eventually {
         }
     }
 
-    data_ptr http_data_loader::when_sent(connection& c, http_response resp)
+    data http_data_loader::when_sent(connection& c, http_response&& resp)
     {
-        c.interruption_point();
-        data_ptr p(new data());
-        p->swap(resp.get_body());
-        return std::move(p);
+        return std::move(resp.get_body());
     }
 
     http_client& http_data_loader::get_client()
@@ -72,13 +69,13 @@ namespace eventually {
         }
     }
 
-    std::future<data_ptr> http_data_loader::load(const std::string& name)
+    std::future<data> http_data_loader::load(const std::string& name)
     {
         connection conn;
         return load(conn, name);
     }
 
-    std::future<data_ptr> http_data_loader::load(connection& c, const std::string& name)
+    std::future<data> http_data_loader::load(connection& c, const std::string& name)
     {
         if(!_client)
         {
