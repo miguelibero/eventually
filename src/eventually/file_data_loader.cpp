@@ -39,16 +39,16 @@ namespace eventually {
 
     FILE* file_data_loader_start(const std::string& name)
     {
-		FILE *fh = nullptr;
+        FILE *fh = nullptr;
 #ifdef _MSC_VER
-		if(fopen_s(&f, name.c_str(), "rb") != 0)
-		{
-			fh = nullptr;
-		}
+        if(fopen_s(&f, name.c_str(), "rb") != 0)
+        {
+            fh = nullptr;
+        }
 #else
         fh = fopen(name.c_str(), "rb");
 #endif
-		if (fh == nullptr)
+        if (fh == nullptr)
         { 
             throw data_exception(std::string("Could not open file '")+name+"'.");
         }
@@ -90,7 +90,7 @@ namespace eventually {
 
     dispatcher& file_data_loader::get_dispatcher()
     {
-    	return *_dispatcher;
+        return *_dispatcher;
     }
 
     std::future<data> file_data_loader::load(const std::string& name)

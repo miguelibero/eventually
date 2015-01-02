@@ -6,14 +6,14 @@
 
 namespace eventually {
 
-	class http_client;
+    class http_client;
     class http_request;
     class http_response;
     class connection;
     class dispatcher;
 
-	class http_data_loader
-	{
+    class http_data_loader
+    {
     public:
         typedef std::function<http_request(const std::string& name)> request_create;
     private:
@@ -36,7 +36,7 @@ namespace eventually {
         http_client& get_client();
         std::future<data> load(connection& c, const std::string& name);
         std::future<data> load(const std::string& name);
-	};
+    };
 }
 
 #endif

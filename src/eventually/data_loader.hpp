@@ -47,15 +47,15 @@ namespace eventually {
     using has_dispatcher = std::is_same<
       decltype(std::declval<T>().get_dispatcher()), dispatcher&>;
 #else
-	template<typename T>
-	struct can_load_data
-	: std::true_type
-	{};
+    template<typename T>
+    struct can_load_data
+    : std::true_type
+    {};
 
-	template<typename T>
-	struct has_dispatcher
-		: std::true_type
-	{};
+    template<typename T>
+    struct has_dispatcher
+        : std::true_type
+    {};
 #endif
 }
 

@@ -49,10 +49,10 @@ namespace eventually{
 
     inline void trim(std::string &str)
     {
-		std::stringstream trimmer;
-		trimmer << str;
-		str.clear();
-		trimmer >> str;
+        std::stringstream trimmer;
+        trimmer << str;
+        str.clear();
+        trimmer >> str;
     }
 
     bool http_response::add_header_str(const std::string& str)

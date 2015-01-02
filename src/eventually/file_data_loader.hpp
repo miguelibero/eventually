@@ -5,11 +5,11 @@
 
 namespace eventually {
 
-	class dispatcher;
+    class dispatcher;
     class connection;
 
-	class file_data_loader
-	{
+    class file_data_loader
+    {
     private:
         dispatcher* _dispatcher;
         bool _delete_dispatcher;
@@ -27,7 +27,7 @@ namespace eventually {
         dispatcher& get_dispatcher();
         std::future<data> load(connection& c, const std::string& name);
         std::future<data> load(const std::string& name);
-	};
+    };
 }
 
 #endif

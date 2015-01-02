@@ -40,7 +40,7 @@ namespace eventually {
         {
             throw new data_exception("No http client found.");
         }
-    	return *_client;
+        return *_client;
     }
 
     dispatcher& http_data_loader::get_dispatcher()

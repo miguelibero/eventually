@@ -6,14 +6,14 @@
 
 namespace eventually {
 
-	class dispatcher;
+    class dispatcher;
     class connection;
 
     template<typename Loader,
         typename std::enable_if<can_load_data<Loader>::value, int>::type = 0,
         typename std::enable_if<has_dispatcher<Loader>::value, int>::type = 0>
-	class setup_data_loader
-	{
+    class setup_data_loader
+    {
     public:
         typedef std::function<void(std::string& name)> name_setup;
         typedef std::function<void(data& data)> data_setup;
@@ -65,13 +65,13 @@ namespace eventually {
             {
                 _name_setup(sname);
             }
-			return _loader->get_dispatcher().when([this](data&& data){
-				if(_data_setup)
-				{
-					_data_setup(data);
-				}
-				return std::move(data);
-			}, _loader->load(c, sname));
+            return _loader->get_dispatcher().when([this](data&& data){
+                if(_data_setup)
+                {
+                    _data_setup(data);
+                }
+                return std::move(data);
+            }, _loader->load(c, sname));
         }
 
         std::future<data> load(const std::string& name)
@@ -79,7 +79,7 @@ namespace eventually {
             connection conn;
             return load(conn, name);
         }
-	};
+    };
 }
 
 #endif

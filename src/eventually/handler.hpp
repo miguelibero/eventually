@@ -3,7 +3,6 @@
 #define _eventually_handler_hpp_
 
 #include <eventually/apply.hpp>
-#include <eventually/template_helper.hpp>
 #include <eventually/is_callable.hpp>
 #include <eventually/connection.hpp>
 #include <future>
@@ -23,7 +22,7 @@ namespace eventually {
     public:
 
         handler(Args&&... args):
-            _args(std::forward<Args>(args)...)
+        _args(std::forward<Args>(args)...)
         {
         }
 

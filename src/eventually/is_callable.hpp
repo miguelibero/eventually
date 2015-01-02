@@ -94,11 +94,11 @@ namespace eventually {
       typedef decltype(std::declval<F>()(std::declval<Args>()...)) type;
     };
 
-	template<typename F>
-	struct result_of<F()>
-	{
-		typedef decltype(std::declval<F>()()) type;
-	};
+    template<typename F>
+    struct result_of<F()>
+    {
+        typedef decltype(std::declval<F>()()) type;
+    };
 
     template<typename Expr, typename Result>
     struct is_callable_with_result
@@ -107,15 +107,15 @@ namespace eventually {
 
 #else
 
-	template<typename Expr>
-	struct is_callable
-	: std::true_type
-	{};
+    template<typename Expr>
+    struct is_callable
+    : std::true_type
+    {};
 
-	template<typename Expr>
+    template<typename Expr>
     using result_of = ::std::result_of<Expr>;
 
-	template<typename Expr, typename Result>
+    template<typename Expr, typename Result>
     struct is_callable_with_result
     : std::true_type
     {};
